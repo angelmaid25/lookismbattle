@@ -1,0 +1,3159 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LOOKISM: BVN EDITION - 2D Fighting Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Chakra+Petch:ital,wght@0,500;0,700;1,700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-display: 'Anton', Impact, sans-serif;
+            --font-arcade: 'Chakra Petch', sans-serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #07090e;
+            color: #f8fafc;
+            font-family: var(--font-sans);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+        }
+        .font-display {
+            font-family: var(--font-display);
+            letter-spacing: 0.04em;
+        }
+        .font-arcade {
+            font-family: var(--font-arcade);
+        }
+        /* Skewed BVN-style HUD bars */
+        .skew-left {
+            transform: skewX(-18deg);
+        }
+        .skew-right {
+            transform: skewX(18deg);
+        }
+        .unskew-left {
+            transform: skewX(18deg);
+        }
+        .unskew-right {
+            transform: skewX(-18deg);
+        }
+        /* Custom Scrollbar for Roster */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { filter: drop-shadow(0 0 8px rgba(234, 179, 8, 0.6)); }
+            50% { filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.95)); }
+        }
+        .title-glow {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+        @keyframes cutinSlide {
+            0% { transform: translateX(-100%) skewX(-12deg); opacity: 0; }
+            15% { transform: translateX(0%) skewX(-12deg); opacity: 1; }
+            85% { transform: translateX(0%) skewX(-12deg); opacity: 1; }
+            100% { transform: translateX(100%) skewX(-12deg); opacity: 0; }
+        }
+        .cutin-animate {
+            animation: cutinSlide 1.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        .char-card {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .char-card:hover {
+            transform: translateY(-3px) scale(1.03);
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body class="relative flex flex-col items-center justify-center bg-slate-950">
+
+    <!-- ==================== 1. MAIN MENU SCREEN ==================== -->
+    <div id="screen-menu" class="absolute inset-0 z-40 flex flex-col items-center justify-between p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+        <!-- Animated Background Canvas for Menu -->
+        <canvas id="menu-bg-canvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-45"></canvas>
+
+        <!-- Top Header -->
+        <div class="relative z-10 w-full max-w-6xl flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <div class="flex items-center gap-3">
+                <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-widest bg-amber-500/20 text-amber-400 border border-amber-500/40 rounded">PTJ UNIVERSE</span>
+                <span class="text-xs text-slate-400 font-arcade">BLEACH VS NARUTO (BVN) COMBAT ENGINE v3.5</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <button id="btn-toggle-sound" class="px-3 py-1.5 rounded bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-xs font-arcade flex items-center gap-2 transition">
+                    <span id="sound-icon">🔊</span> <span id="sound-text">ÂM THANH: BẬT</span>
+                </button>
+                <button id="btn-open-controls" class="px-3 py-1.5 rounded bg-indigo-600/30 hover:bg-indigo-600/50 border border-indigo-500/50 text-indigo-300 text-xs font-arcade transition">
+                    🎮 HƯỚNG DẪN NÚT BẤM
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Title & Mode Buttons -->
+        <div class="relative z-10 flex flex-col items-center text-center my-auto max-w-3xl w-full px-4">
+            <div class="text-xs md:text-sm font-arcade tracking-[0.35em] text-amber-400 uppercase mb-1">GEN 0 • GEN 1 • GEN 2 — 22 HUYỀN THOẠI ĐỐI KHÁNG</div>
+            <h1 class="text-6xl sm:text-7xl md:text-8xl font-display italic tracking-wider uppercase text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-200 to-amber-500 title-glow leading-none">
+                LOOKISM <span class="text-red-500">VS</span> BVN
+            </h1>
+            <p class="mt-2 text-slate-400 text-xs sm:text-sm max-w-xl">
+                Hệ thống chiến đấu 2D tốc độ cao: <span class="text-slate-200 font-semibold">Combo 4 nhịp, Thế thân thoát đòn (L), Phá giáp (U), Tuyệt kỹ (I) & Thức tỉnh Vô Cực (O)</span>.
+            </p>
+
+            <!-- Mode Selection Cards -->
+            <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4 w-full">
+                <!-- 1P vs AI -->
+                <div class="bg-slate-900/90 border-2 border-amber-500/60 hover:border-amber-400 rounded-xl p-5 flex flex-col justify-between shadow-2xl shadow-amber-500/10 transition group">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-arcade uppercase px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">ARCADE</span>
+                            <span class="text-xl">⚔️</span>
+                        </div>
+                        <h2 class="text-2xl font-display tracking-wide text-white group-hover:text-amber-300 transition">1P VS AI (MÁY)</h2>
+                        <p class="text-xs text-slate-400 mt-1">Đấu với State Machine AI biết đỡ đòn, thế thân, nối chuỗi combo và tung Ultimate.</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <label class="block text-[11px] font-arcade uppercase text-slate-400 mb-1.5 text-left">Độ Khó AI:</label>
+                        <div class="grid grid-cols-3 gap-1.5 mb-3" id="ai-diff-group">
+                            <button data-diff="easy" class="diff-btn py-1.5 text-xs font-arcade rounded border border-slate-700 bg-slate-800 text-slate-300 transition">DỄ</button>
+                            <button data-diff="normal" class="diff-btn py-1.5 text-xs font-arcade rounded border border-amber-500 bg-amber-500/20 text-amber-300 font-bold transition">VỪA</button>
+                            <button data-diff="hard" class="diff-btn py-1.5 text-xs font-arcade rounded border border-slate-700 bg-slate-800 text-slate-300 transition">GOD DOG</button>
+                        </div>
+                        <button onclick="GameApp.openCharSelect('ai')" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-slate-950 font-arcade font-bold text-sm tracking-wider uppercase shadow-lg transition">
+                            CHỌN NHÂN VẬT →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 1P vs 2P -->
+                <div class="bg-slate-900/90 border-2 border-sky-500/50 hover:border-sky-400 rounded-xl p-5 flex flex-col justify-between shadow-2xl shadow-sky-500/10 transition group">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-arcade uppercase px-2 py-0.5 rounded bg-sky-500/20 text-sky-300">VERSUS LOCAL</span>
+                            <span class="text-xl">🔥</span>
+                        </div>
+                        <h2 class="text-2xl font-display tracking-wide text-white group-hover:text-sky-300 transition">1P VS 2P (2 NGƯỜI)</h2>
+                        <p class="text-xs text-slate-400 mt-1">So tài trực tiếp 2 người chơi trên cùng một bàn phím theo chuẩn Bleach vs Naruto.</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="p-2 rounded bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 font-arcade mb-3 text-left">
+                            <div><b class="text-amber-400">P1:</b> WASD + J, K, L, U, I, O</div>
+                            <div><b class="text-sky-400">P2:</b> Mũi Tên + Numpad 1,2,3,4,5,6</div>
+                        </div>
+                        <button onclick="GameApp.openCharSelect('pvp')" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white font-arcade font-bold text-sm tracking-wider uppercase shadow-lg transition">
+                            ĐẤU 2 NGƯỜI →
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Training Mode -->
+                <div class="bg-slate-900/90 border-2 border-emerald-500/50 hover:border-emerald-400 rounded-xl p-5 flex flex-col justify-between shadow-2xl shadow-emerald-500/10 transition group">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-arcade uppercase px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">PRACTICE</span>
+                            <span class="text-xl">🥋</span>
+                        </div>
+                        <h2 class="text-2xl font-display tracking-wide text-white group-hover:text-emerald-300 transition">TRAINING MODE</h2>
+                        <p class="text-xs text-slate-400 mt-1">Tự động hồi đầy 300% Nộ & Máu. Tùy chỉnh AI đứng yên, tập đỡ đòn hoặc đánh trả.</p>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="p-2 rounded bg-slate-950/70 border border-slate-800 text-[11px] text-slate-400 font-arcade mb-3 text-left">
+                            <div>• Vô hạn thời gian & Tự hồi máu</div>
+                            <div>• Đầy 3 vạch Nộ liên tục để test Ultimate</div>
+                        </div>
+                        <button onclick="GameApp.openCharSelect('training')" class="w-full py-2.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-slate-950 font-arcade font-bold text-sm tracking-wider uppercase shadow-lg transition">
+                            VÀO PHÒNG TẬP →
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Footer -->
+        <div class="relative z-10 w-full max-w-6xl flex flex-wrap items-center justify-between text-xs text-slate-500 border-t border-slate-800/80 pt-3">
+            <div>Mẹo: Nhấn <b class="text-amber-400">L (hoặc Num 3)</b> ngay khi đang bị dính đòn để dùng <b class="text-white">Thế Thân (Substitution)</b> dịch chuyển ra sau lưng đối thủ!</div>
+            <div class="font-arcade">22 FIGHTERS • HITSTOP • AFTERIMAGES • ULTIMATE CUT-INS</div>
+        </div>
+    </div>
+
+    <!-- ==================== 2. CHARACTER SELECT SCREEN ==================== -->
+    <div id="screen-select" class="hidden absolute inset-0 z-40 flex flex-col bg-slate-950 text-white p-3 sm:p-5 overflow-hidden">
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2.5 shrink-0">
+            <button onclick="GameApp.showMenu()" class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-arcade flex items-center gap-1.5 transition">
+                ← QUAY LẠI MENU
+            </button>
+            <div class="text-center">
+                <h2 class="text-xl sm:text-2xl font-display tracking-wider text-amber-400 uppercase">CHỌN NHÂN VẬT CHIẾN ĐẤU</h2>
+                <div id="select-mode-label" class="text-[11px] font-arcade text-slate-400">CHẾ ĐỘ: 1P VS AI (GOD DOG)</div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="GameApp.randomSelect()" class="px-3 py-1.5 rounded bg-purple-600/30 hover:bg-purple-600/50 border border-purple-500/50 text-purple-200 text-xs font-arcade transition">
+                    🎲 NGẪU NHIÊN
+                </button>
+                <button onclick="GameApp.startMatch()" class="px-5 py-1.5 rounded bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-slate-950 font-arcade font-bold text-sm tracking-wider uppercase shadow-lg shadow-red-600/30 transition">
+                    ⚔️ BẮT ĐẦU (FIGHT!)
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content: P1 Preview | Roster Grid | P2 Preview -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 mt-3 min-h-0 overflow-hidden">
+            
+            <!-- P1 Fighter Info Card (3 cols) -->
+            <div id="p1-select-panel" onclick="GameApp.setActiveSelector(1)" class="lg:col-span-3 bg-slate-900/90 border-2 border-amber-500 rounded-xl p-3 flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span class="px-2 py-0.5 text-xs font-arcade font-bold bg-amber-500 text-slate-950 rounded">PLAYER 1 (ĐANG CHỌN)</span>
+                    <span id="p1-gen-badge" class="text-xs font-arcade text-amber-300">GEN 0</span>
+                </div>
+
+                <!-- Canvas Live Preview P1 -->
+                <div class="relative flex items-center justify-center my-1 bg-slate-950/80 rounded-lg border border-slate-800 h-36 sm:h-40 overflow-hidden">
+                    <canvas id="p1-preview-canvas" width="220" height="155"></canvas>
+                    <div class="absolute bottom-1.5 left-2 right-2 flex justify-between items-end pointer-events-none">
+                        <div>
+                            <div id="p1-char-title" class="text-[10px] font-arcade uppercase text-amber-400 tracking-wider">Huyền Thoại Nắm Đấm</div>
+                            <div id="p1-char-name" class="text-xl font-display tracking-wide text-white leading-tight">Gapryong Kim</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Bars -->
+                <div class="space-y-1.5 text-xs font-arcade bg-slate-950/60 p-2 rounded border border-slate-800/80">
+                    <div class="flex items-center gap-2">
+                        <span class="w-16 text-slate-400">MÁU (HP):</span>
+                        <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="p1-stat-hp" class="h-full bg-emerald-500" style="width:90%"></div></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-16 text-slate-400">TỐC ĐỘ:</span>
+                        <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="p1-stat-spd" class="h-full bg-sky-400" style="width:75%"></div></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-16 text-slate-400">SÁT THƯƠNG:</span>
+                        <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="p1-stat-atk" class="h-full bg-rose-500" style="width:100%"></div></div>
+                    </div>
+                </div>
+
+                <!-- Skills List -->
+                <div class="mt-2 space-y-1.5 text-[11px] overflow-y-auto pr-1">
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-emerald-400">
+                        <span class="font-arcade font-bold text-emerald-400">NỘI TẠI:</span> <span id="p1-skill-passive" class="text-slate-300"></span>
+                    </div>
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-sky-400">
+                        <span class="font-arcade font-bold text-sky-400">[U] CHIÊU PHỤ:</span> <span id="p1-skill-u" class="text-slate-300"></span>
+                    </div>
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-amber-400">
+                        <span class="font-arcade font-bold text-amber-400">[I] KỸ NĂNG (1 NỘ):</span> <span id="p1-skill-i" class="text-slate-300"></span>
+                    </div>
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-rose-500">
+                        <span class="font-arcade font-bold text-rose-400">[O] ULTIMATE (3 NỘ):</span> <span id="p1-skill-o" class="text-slate-300"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center Roster Grid (6 cols) -->
+            <div class="lg:col-span-6 bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex flex-col min-h-0 overflow-hidden">
+                <!-- Generation Filter Tabs + Slot Selector -->
+                <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800 shrink-0">
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="GameApp.filterGen('ALL')" data-gen="ALL" class="gen-tab px-2.5 py-1 rounded text-xs font-arcade font-bold bg-amber-500 text-slate-950 transition">TẤT CẢ (22)</button>
+                        <button onclick="GameApp.filterGen('GEN 0')" data-gen="GEN 0" class="gen-tab px-2.5 py-1 rounded text-xs font-arcade bg-slate-800 text-slate-300 hover:bg-slate-700 transition">GEN 0 (6)</button>
+                        <button onclick="GameApp.filterGen('GEN 1')" data-gen="GEN 1" class="gen-tab px-2.5 py-1 rounded text-xs font-arcade bg-slate-800 text-slate-300 hover:bg-slate-700 transition">GEN 1 (5)</button>
+                        <button onclick="GameApp.filterGen('GEN 2')" data-gen="GEN 2" class="gen-tab px-2.5 py-1 rounded text-xs font-arcade bg-slate-800 text-slate-300 hover:bg-slate-700 transition">GEN 2 (11)</button>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs font-arcade">
+                        <span class="text-slate-400">Đang chọn cho:</span>
+                        <button id="btn-slot-p1" onclick="GameApp.setActiveSelector(1)" class="px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-bold">P1</button>
+                        <button id="btn-slot-p2" onclick="GameApp.setActiveSelector(2)" class="px-2.5 py-1 rounded bg-slate-800 text-sky-400 border border-sky-500/40">P2 / AI</button>
+                    </div>
+                </div>
+
+                <!-- Scrollable 22 Character Grid categorized by Gen -->
+                <div id="roster-container" class="flex-1 overflow-y-auto pr-1 mt-2 space-y-4">
+                    <!-- Populated dynamically by JS -->
+                </div>
+            </div>
+
+            <!-- P2 Fighter Info Card (3 cols) -->
+            <div id="p2-select-panel" onclick="GameApp.setActiveSelector(2)" class="lg:col-span-3 bg-slate-900/90 border-2 border-slate-700 rounded-xl p-3 flex flex-col justify-between cursor-pointer relative overflow-hidden">
+                <div class="flex items-center justify-between">
+                    <span id="p2-slot-badge" class="px-2 py-0.5 text-xs font-arcade font-bold bg-sky-500 text-slate-950 rounded">PLAYER 2 / AI</span>
+                    <span id="p2-gen-badge" class="text-xs font-arcade text-sky-300">GEN 1</span>
+                </div>
+
+                <!-- Canvas Live Preview P2 -->
+                <div class="relative flex items-center justify-center my-1 bg-slate-950/80 rounded-lg border border-slate-800 h-36 sm:h-40 overflow-hidden">
+                    <canvas id="p2-preview-canvas" width="220" height="155"></canvas>
+                    <div class="absolute bottom-1.5 left-2 right-2 flex justify-between items-end pointer-events-none text-right">
+                        <div class="w-full">
+                            <div id="p2-char-title" class="text-[10px] font-arcade uppercase text-sky-400 tracking-wider">Bạch Quỷ (Shiro Oni)</div>
+                            <div id="p2-char-name" class="text-xl font-display tracking-wide text-white leading-tight">Gun Park</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stats Bars -->
+                <div class="space-y-1.5 text-xs font-arcade bg-slate-950/60 p-2 rounded border border-slate-800/80">
+                    <div class="flex items-center gap-2">
+                        <span class="w-16 text-slate-400">MÁU (HP):</span>
+                        <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="p2-stat-hp" class="h-full bg-emerald-500" style="width:95%"></div></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-16 text-slate-400">TỐC ĐỘ:</span>
+                        <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="p2-stat-spd" class="h-full bg-sky-400" style="width:80%"></div></div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-16 text-slate-400">SÁT THƯƠNG:</span>
+                        <div class="flex-1 h-2 bg-slate-800 rounded overflow-hidden"><div id="p2-stat-atk" class="h-full bg-rose-500" style="width:92%"></div></div>
+                    </div>
+                </div>
+
+                <!-- Skills List -->
+                <div class="mt-2 space-y-1.5 text-[11px] overflow-y-auto pr-1">
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-emerald-400">
+                        <span class="font-arcade font-bold text-emerald-400">NỘI TẠI:</span> <span id="p2-skill-passive" class="text-slate-300"></span>
+                    </div>
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-sky-400">
+                        <span class="font-arcade font-bold text-sky-400">[U] CHIÊU PHỤ:</span> <span id="p2-skill-u" class="text-slate-300"></span>
+                    </div>
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-amber-400">
+                        <span class="font-arcade font-bold text-amber-400">[I] KỸ NĂNG (1 NỘ):</span> <span id="p2-skill-i" class="text-slate-300"></span>
+                    </div>
+                    <div class="p-1.5 rounded bg-slate-950/90 border-l-2 border-rose-500">
+                        <span class="font-arcade font-bold text-rose-400">[O] ULTIMATE (3 NỘ):</span> <span id="p2-skill-o" class="text-slate-300"></span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ==================== 3. BATTLE ARENA & HUD SCREEN ==================== -->
+    <div id="screen-battle" class="hidden relative w-full h-full flex flex-col justify-between overflow-hidden select-none bg-black">
+        
+        <!-- MAIN GAME CANVAS -->
+        <canvas id="battle-canvas" class="absolute inset-0 w-full h-full z-0"></canvas>
+
+        <!-- TOP HUD (BLEACH VS NARUTO STYLE) -->
+        <div class="relative z-20 w-full max-w-7xl mx-auto pt-2 sm:pt-3 px-3 sm:px-6 pointer-events-none">
+            <div class="flex items-start justify-between gap-2 sm:gap-4">
+                
+                <!-- PLAYER 1 HUD (LEFT) -->
+                <div class="flex-1 flex flex-col">
+                    <div class="flex items-end justify-between mb-1 px-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-1.5 py-0.5 text-[10px] font-arcade font-bold bg-amber-500 text-slate-950 rounded">P1</span>
+                            <span id="hud-p1-name" class="text-sm sm:text-lg font-display tracking-wider text-white drop-shadow">GAPRYONG KIM</span>
+                            <span id="hud-p1-status" class="hidden px-1.5 py-0.5 text-[10px] font-arcade font-bold bg-purple-600 text-white rounded animate-pulse">AWAKENED</span>
+                        </div>
+                        <span id="hud-p1-hp-text" class="text-xs font-arcade text-amber-300">1000 / 1000</span>
+                    </div>
+
+                    <!-- Skewed HP Bar Container -->
+                    <div class="h-5 sm:h-6 w-full bg-slate-900/95 border-2 border-slate-400 skew-left p-0.5 shadow-lg relative overflow-hidden">
+                        <!-- Delayed Damage Bar (Yellow/Red) -->
+                        <div id="hud-p1-hp-delay" class="absolute top-0.5 bottom-0.5 left-0.5 bg-amber-400 transition-all duration-300" style="width: 100%;"></div>
+                        <!-- Actual HP Bar -->
+                        <div id="hud-p1-hp-bar" class="relative h-full bg-gradient-to-r from-red-600 via-amber-500 to-emerald-400 transition-all duration-75" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- Stamina & Sub-Skill Cooldown Row -->
+                    <div class="mt-1.5 flex items-center gap-3 pr-4">
+                        <div class="flex-1 h-2.5 bg-slate-900/95 border border-slate-600 skew-left p-0.5">
+                            <div id="hud-p1-stamina" class="h-full bg-gradient-to-r from-sky-500 to-cyan-300 transition-all duration-75" style="width: 100%;"></div>
+                        </div>
+                        <span class="text-[10px] font-arcade text-cyan-300">STAMINA (L)</span>
+                    </div>
+                </div>
+
+                <!-- CENTER TIMER & MENU CONTROLS -->
+                <div class="flex flex-col items-center shrink-0 pointer-events-auto">
+                    <div class="w-16 sm:w-20 h-12 sm:h-14 bg-slate-900/95 border-2 border-amber-500/80 rounded-lg flex flex-col items-center justify-center shadow-xl">
+                        <span class="text-[9px] font-arcade text-slate-400 uppercase leading-none">TIME</span>
+                        <span id="hud-timer" class="text-2xl sm:text-3xl font-display text-amber-400 leading-none mt-0.5">99</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 mt-1.5">
+                        <button onclick="GameApp.openCharSelect(GameApp.mode)" class="px-2 py-0.5 rounded bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-arcade text-slate-300 transition">
+                            ĐỔI TƯỚNG
+                        </button>
+                        <button onclick="GameApp.showMenu()" class="px-2 py-0.5 rounded bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-[10px] font-arcade text-slate-300 transition">
+                            MENU
+                        </button>
+                    </div>
+                </div>
+
+                <!-- PLAYER 2 HUD (RIGHT) -->
+                <div class="flex-1 flex flex-col items-end">
+                    <div class="w-full flex items-end justify-between mb-1 px-1">
+                        <span id="hud-p2-hp-text" class="text-xs font-arcade text-sky-300">1000 / 1000</span>
+                        <div class="flex items-center gap-2">
+                            <span id="hud-p2-status" class="hidden px-1.5 py-0.5 text-[10px] font-arcade font-bold bg-rose-600 text-white rounded animate-pulse">AWAKENED</span>
+                            <span id="hud-p2-name" class="text-sm sm:text-lg font-display tracking-wider text-white drop-shadow">GUN PARK</span>
+                            <span id="hud-p2-tag" class="px-1.5 py-0.5 text-[10px] font-arcade font-bold bg-sky-500 text-slate-950 rounded">AI</span>
+                        </div>
+                    </div>
+
+                    <!-- Skewed HP Bar Container (Right-aligned fill) -->
+                    <div class="h-5 sm:h-6 w-full bg-slate-900/95 border-2 border-slate-400 skew-right p-0.5 shadow-lg relative overflow-hidden flex justify-end">
+                        <div id="hud-p2-hp-delay" class="absolute top-0.5 bottom-0.5 right-0.5 bg-amber-400 transition-all duration-300" style="width: 100%;"></div>
+                        <div id="hud-p2-hp-bar" class="relative h-full bg-gradient-to-l from-red-600 via-amber-500 to-emerald-400 transition-all duration-75" style="width: 100%;"></div>
+                    </div>
+
+                    <!-- Stamina Row -->
+                    <div class="mt-1.5 w-full flex items-center justify-end gap-3 pl-4">
+                        <span class="text-[10px] font-arcade text-cyan-300">STAMINA (L/3)</span>
+                        <div class="flex-1 h-2.5 bg-slate-900/95 border border-slate-600 skew-right p-0.5 flex justify-end">
+                            <div id="hud-p2-stamina" class="h-full bg-gradient-to-l from-sky-500 to-cyan-300 transition-all duration-75" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- TRAINING MODE TOOLBAR (Visible only in Training Mode) -->
+            <div id="training-toolbar" class="hidden mt-2 mx-auto max-w-2xl bg-slate-900/90 border border-emerald-500/50 rounded-lg px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 pointer-events-auto text-xs font-arcade">
+                <span class="text-emerald-400 font-bold">🥋 TRAINING:</span>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-slate-400">Hành vi AI:</span>
+                    <button onclick="GameApp.setTrainingAI('dummy')" id="trn-dummy" class="px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold">Đứng Yên</button>
+                    <button onclick="GameApp.setTrainingAI('guard')" id="trn-guard" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Luôn Đỡ (S)</button>
+                    <button onclick="GameApp.setTrainingAI('fight')" id="trn-fight" class="px-2 py-0.5 rounded bg-slate-800 text-slate-300">Đánh Trả</button>
+                </div>
+                <button onclick="GameApp.refillTraining()" class="px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/50 text-amber-300 hover:bg-amber-500/30">
+                    ⚡ ĐẦY NỘ & MÁU
+                </button>
+            </div>
+        </div>
+
+        <!-- ULTIMATE CUT-IN CINEMATIC OVERLAY -->
+        <div id="ult-cutin-overlay" class="hidden absolute inset-0 z-30 pointer-events-none flex items-center justify-center overflow-hidden bg-black/75">
+            <div id="ult-cutin-banner" class="w-full py-6 sm:py-8 bg-gradient-to-r from-black via-slate-900 to-black border-y-4 border-amber-400 flex items-center justify-center gap-6 px-8 shadow-2xl">
+                <div class="text-left max-w-3xl">
+                    <div id="ult-cutin-char" class="text-sm sm:text-base font-arcade font-bold uppercase tracking-[0.3em] text-amber-400">GAPRYONG KIM • THỨC TỈNH KỸ NĂNG TỐI THƯỢNG</div>
+                    <div id="ult-cutin-skill" class="text-4xl sm:text-6xl font-display italic uppercase tracking-wider text-white drop-shadow-[0_4px_20px_rgba(245,158,11,0.9)]">
+                        CÚ ĐẤM NIỀM TIN (OVERCOME PUNCH)
+                    </div>
+                    <div id="ult-cutin-quote" class="text-xs sm:text-sm font-arcade italic text-slate-300 mt-1">
+                        "Để bảo vệ những người phía sau... nắm đấm này sẽ vượt qua mọi giới hạn!"
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MATCH RESULT OVERLAY (KO / WIN) -->
+        <div id="match-result-overlay" class="hidden absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center">
+            <div id="result-ko-badge" class="text-6xl sm:text-8xl font-display italic text-transparent bg-clip-text bg-gradient-to-b from-white via-amber-300 to-red-600 drop-shadow-2xl">
+                K.O.!
+            </div>
+            <div id="result-winner-text" class="mt-2 text-2xl sm:text-4xl font-display tracking-wider text-white uppercase">
+                GAPRYONG KIM CHIẾN THẮNG!
+            </div>
+            <p id="result-sub-text" class="text-xs sm:text-sm font-arcade text-slate-400 mt-1">Huyền thoại vẫn là huyền thoại.</p>
+
+            <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <button onclick="GameApp.rematch()" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-amber-500 to-red-600 hover:from-amber-400 hover:to-red-500 text-slate-950 font-arcade font-bold text-sm uppercase tracking-wider shadow-lg transition">
+                    🔄 ĐẤU LẠI (REMATCH)
+                </button>
+                <button onclick="GameApp.openCharSelect(GameApp.mode)" class="px-6 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-arcade font-bold text-sm uppercase tracking-wider transition">
+                    👥 ĐỔI NHÂN VẬT
+                </button>
+                <button onclick="GameApp.showMenu()" class="px-6 py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-300 font-arcade text-sm uppercase tracking-wider transition">
+                    🏠 VỀ MENU CHÍNH
+                </button>
+            </div>
+        </div>
+
+        <!-- BOTTOM ENERGY GAUGE HUD (3 BARS: 100% - 200% - 300%) -->
+        <div class="relative z-20 w-full max-w-7xl mx-auto pb-2 sm:pb-4 px-3 sm:px-6 pointer-events-none">
+            <div class="flex items-end justify-between gap-4">
+                
+                <!-- P1 ENERGY BAR (3 SEGMENTS) -->
+                <div class="w-64 sm:w-80 bg-slate-950/90 border border-slate-700/90 rounded-lg p-2 shadow-2xl">
+                    <div class="flex items-center justify-between text-[11px] font-arcade mb-1">
+                        <span class="text-amber-400 font-bold">NỘ (ENERGY)</span>
+                        <span id="hud-p1-energy-num" class="text-white font-bold">100% (1 VẠCH)</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 h-3.5 bg-slate-900 p-0.5 rounded border border-slate-700">
+                        <div class="bg-slate-800 rounded-sm overflow-hidden"><div id="hud-p1-en-1" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-75" style="width: 100%"></div></div>
+                        <div class="bg-slate-800 rounded-sm overflow-hidden"><div id="hud-p1-en-2" class="h-full bg-gradient-to-r from-orange-500 to-amber-300 transition-all duration-75" style="width: 0%"></div></div>
+                        <div class="bg-slate-800 rounded-sm overflow-hidden"><div id="hud-p1-en-3" class="h-full bg-gradient-to-r from-red-600 via-rose-500 to-amber-200 transition-all duration-75" style="width: 0%"></div></div>
+                    </div>
+                    <div class="mt-1.5 flex items-center justify-between text-[10px] font-arcade text-slate-400">
+                        <span><b class="text-white">J</b>:Đánh <b class="text-sky-400">U</b>:Phá giáp</span>
+                        <span><b class="text-cyan-300">L</b>:Lướt <b class="text-amber-400">I</b>:1Nộ <b class="text-rose-400">O</b>:3Nộ</span>
+                    </div>
+                </div>
+
+                <!-- P2 ENERGY BAR (3 SEGMENTS) -->
+                <div class="w-64 sm:w-80 bg-slate-950/90 border border-slate-700/90 rounded-lg p-2 shadow-2xl">
+                    <div class="flex items-center justify-between text-[11px] font-arcade mb-1">
+                        <span id="hud-p2-energy-num" class="text-white font-bold">100% (1 VẠCH)</span>
+                        <span class="text-sky-400 font-bold">NỘ (ENERGY)</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-1 h-3.5 bg-slate-900 p-0.5 rounded border border-slate-700">
+                        <div class="bg-slate-800 rounded-sm overflow-hidden"><div id="hud-p2-en-1" class="h-full bg-gradient-to-r from-sky-500 to-cyan-300 transition-all duration-75" style="width: 100%"></div></div>
+                        <div class="bg-slate-800 rounded-sm overflow-hidden"><div id="hud-p2-en-2" class="h-full bg-gradient-to-r from-indigo-500 to-sky-300 transition-all duration-75" style="width: 0%"></div></div>
+                        <div class="bg-slate-800 rounded-sm overflow-hidden"><div id="hud-p2-en-3" class="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-300 transition-all duration-75" style="width: 0%"></div></div>
+                    </div>
+                    <div class="mt-1.5 flex items-center justify-between text-[10px] font-arcade text-slate-400">
+                        <span><b class="text-white">Num1</b>:Đánh <b class="text-sky-400">Num4</b>:Phụ</span>
+                        <span><b class="text-cyan-300">Num3</b>:Lướt <b class="text-amber-400">Num5</b>:1Nộ <b class="text-rose-400">Num6</b>:3Nộ</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== 4. CONTROLS HELP MODAL ==================== -->
+    <div id="modal-controls" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border-2 border-slate-700 rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-2xl font-display tracking-wider text-amber-400">HƯỚNG DẪN ĐIỀU KHIỂN (CHUẨN BLEACH VS NARUTO)</h3>
+                <button id="btn-close-controls" class="text-slate-400 hover:text-white text-xl font-bold">✕</button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-xs font-arcade">
+                <div class="bg-slate-950 p-4 rounded-xl border border-amber-500/40 space-y-2">
+                    <div class="text-amber-400 font-bold text-sm mb-2">PLAYER 1 (BÊN TRÁI)</div>
+                    <div class="flex justify-between"><span>Di chuyển Trái / Phải:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">A</kbd> / <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">D</kbd></div>
+                    <div class="flex justify-between"><span>Nhảy / Nhảy đúp (Double Jump):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">W</kbd> hoặc <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">K</kbd></div>
+                    <div class="flex justify-between"><span>Phòng thủ / Đỡ đòn:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">S</kbd></div>
+                    <div class="flex justify-between"><span>Đánh thường (Combo 4 nhịp):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-amber-300">J</kbd></div>
+                    <div class="flex justify-between"><span>Chiêu phụ / Phá giáp / Vật:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-sky-300">U</kbd></div>
+                    <div class="flex justify-between"><span>Lướt nhanh / Thế thân thoát đòn:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-cyan-300">L</kbd></div>
+                    <div class="flex justify-between"><span>Kỹ năng Đặc Biệt (1 vạch Nộ):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-amber-400">I</kbd></div>
+                    <div class="flex justify-between"><span>Ultimate Tối Thượng (3 vạch Nộ):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-rose-400">O</kbd></div>
+                </div>
+                <div class="bg-slate-950 p-4 rounded-xl border border-sky-500/40 space-y-2">
+                    <div class="text-sky-400 font-bold text-sm mb-2">PLAYER 2 (BÊN PHẢI)</div>
+                    <div class="flex justify-between"><span>Di chuyển Trái / Phải:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">←</kbd> / <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">→</kbd></div>
+                    <div class="flex justify-between"><span>Nhảy / Nhảy đúp:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">↑</kbd> hoặc <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">Num 2</kbd></div>
+                    <div class="flex justify-between"><span>Phòng thủ / Đỡ đòn:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-white">↓</kbd></div>
+                    <div class="flex justify-between"><span>Đánh thường (Combo 4 nhịp):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-amber-300">Num 1</kbd></div>
+                    <div class="flex justify-between"><span>Chiêu phụ / Phá giáp / Vật:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-sky-300">Num 4</kbd></div>
+                    <div class="flex justify-between"><span>Lướt nhanh / Thế thân thoát đòn:</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-cyan-300">Num 3</kbd></div>
+                    <div class="flex justify-between"><span>Kỹ năng Đặc Biệt (1 vạch Nộ):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-amber-400">Num 5</kbd></div>
+                    <div class="flex justify-between"><span>Ultimate Tối Thượng (3 vạch Nộ):</span> <kbd class="px-2 py-0.5 bg-slate-800 rounded text-rose-400">Num 6</kbd></div>
+                </div>
+            </div>
+            <div class="mt-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-xs text-slate-300 leading-relaxed">
+                💡 <b>Mẹo Chiến Đấu BVN:</b> Bạn có thể nối chuỗi <b class="text-white">J → J → J → U → I</b> (hoặc <b class="text-rose-400">O</b>) để tối đa hóa sát thương! Khi bị đối thủ combo liên hoàn, hãy nhấn <b class="text-cyan-300">L (hoặc Num 3)</b> tiêu hao 50 Stamina để <b>Thế Thân</b> dịch chuyển ra sau lưng đối phương.
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JAVASCRIPT ENGINE ==================== -->
+    <script>
+    /**
+     * ============================================================================
+     * 1. PROCEDURAL WEB AUDIO SYNTHESIZER (NO EXTERNAL SOUND FILES REQUIRED)
+     * ============================================================================
+     */
+    const SoundFX = {
+        ctx: null,
+        enabled: true,
+        init() {
+            if (!this.ctx) {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (AudioCtx) this.ctx = new AudioCtx();
+            }
+            if (this.ctx && this.ctx.state === 'suspended') {
+                this.ctx.resume();
+            }
+        },
+        toggle() {
+            this.enabled = !this.enabled;
+            document.getElementById('sound-icon').textContent = this.enabled ? '🔊' : '🔇';
+            document.getElementById('sound-text').textContent = this.enabled ? 'ÂM THANH: BẬT' : 'ÂM THANH: TẮT';
+        },
+        play(type) {
+            if (!this.enabled) return;
+            try {
+                this.init();
+                if (!this.ctx) return;
+                const now = this.ctx.currentTime;
+
+                if (type === 'hit_light') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.exponentialRampToValueAtTime(45, now + 0.09);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.09);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.09);
+                } else if (type === 'hit_heavy') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.exponentialRampToValueAtTime(28, now + 0.18);
+                    gain.gain.setValueAtTime(0.45, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.18);
+                } else if (type === 'slash') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(900, now);
+                    osc.frequency.exponentialRampToValueAtTime(180, now + 0.12);
+                    gain.gain.setValueAtTime(0.28, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'block') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(520, now);
+                    osc.frequency.setValueAtTime(340, now + 0.04);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'dash') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(240, now);
+                    osc.frequency.exponentialRampToValueAtTime(620, now + 0.11);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.11);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.11);
+                } else if (type === 'ult_trigger') {
+                    [220, 330, 440, 660].forEach((freq, idx) => {
+                        const osc = this.ctx.createOscillator();
+                        const gain = this.ctx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                        gain.gain.setValueAtTime(0.25, now + idx * 0.06);
+                        gain.gain.exponentialRampToValueAtTime(0.008, now + idx * 0.06 + 0.35);
+                        osc.connect(gain);
+                        gain.connect(this.ctx.destination);
+                        osc.start(now + idx * 0.06);
+                        osc.stop(now + idx * 0.06 + 0.35);
+                    });
+                } else if (type === 'ko') {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(22, now + 0.65);
+                    gain.gain.setValueAtTime(0.5, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.65);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.65);
+                }
+            } catch (e) {
+                // Ignore audio context locks
+            }
+        }
+    };
+
+    /**
+     * ============================================================================
+     * 2. COMPLETE 22 LOOKISM CHARACTERS ROSTER DATA OBJECT
+     * ============================================================================
+     */
+    const CHARACTERS = [
+        // ================= 1. GEN 0 (THẾ HỆ TIỀN KHỞI - 6 CHARS) =================
+        {
+            id: 'gapryong',
+            name: 'Gapryong Kim',
+            title: 'Huyền Thoại Thế Hệ 0',
+            gen: 'GEN 0',
+            hp: 1180,
+            speed: 4.5,
+            atk: 1.32,
+            scale: 1.07,
+            auraColor: '#a855f7', // Purple Conviction
+            secondaryAura: '#f0abfc',
+            hairColor: '#1e1b4b',
+            hairStyle: 'fedora',
+            eyeType: 'purple',
+            outfit: { torso: '#1e293b', inner: '#f8fafc', tie: '#dc2626', pants: '#0f172a', gloves: '#3b0764' },
+            weapon: 'none',
+            passiveName: 'Niềm Tin (Conviction)',
+            passiveDesc: 'Đòn đánh xuyên 30% giáp. Khi máu dưới 50%, sát thương tăng 25% và rực sáng hào quang Tím.',
+            uSkill: { name: 'Thiết Quyền Phá Giáp', type: 'guardBreak', dmg: 85, desc: 'Cú đấm thẳng bọc hào quang Tím phá vỡ hoàn toàn thế đỡ đòn.' },
+            iSkill: { name: 'Long Quyền Khởi Nguyên', type: 'rush', dmg: 165, desc: 'Lao tới tung liên hoàn 3 cú đấm móc hất tung đối thủ.' },
+            oSkill: {
+                name: 'Cú Đấm Niềm Tin (Overcome Punch)',
+                quote: '"Để bảo vệ những người phía sau... nắm đấm này sẽ vượt qua mọi giới hạn!"',
+                dmg: 340,
+                desc: 'Tụ toàn bộ sức mạnh Niềm Tin vào một cú đấm làm nổ tung màn hình.'
+            }
+        },
+        {
+            id: 'elite',
+            name: 'Elite (Charles Choi)',
+            title: 'Chiến Lược Gia Tuyệt Đối',
+            gen: 'GEN 0',
+            hp: 980,
+            speed: 6.3,
+            atk: 1.12,
+            scale: 1.0,
+            auraColor: '#38bdf8', // Cyan/White Invisible Attacks
+            secondaryAura: '#f8fafc',
+            hairColor: '#cbd5e1',
+            hairStyle: 'slickBack',
+            eyeType: 'glasses',
+            outfit: { torso: '#334155', inner: '#e2e8f0', tie: '#0284c7', pants: '#1e293b' },
+            weapon: 'none',
+            passiveName: 'Đòn Đánh Vô Hình (IA)',
+            passiveDesc: 'Tốc độ di chuyển cao, đòn đá để lại vệt sáng xanh-trắng làm đối thủ bị khựng (Hitstun) lâu hơn 20%.',
+            uSkill: { name: 'Cước Vô Hình Điểm Mù', type: 'iaDash', dmg: 70, desc: 'Lướt chớp nhoáng vào điểm mù và đá văng đối phương.' },
+            iSkill: { name: 'Liên Hoàn Cước Ánh Sáng', type: 'flurry', dmg: 150, desc: 'Tung 6 cú đá tốc độ cao trên không trung.' },
+            oSkill: {
+                name: 'Invisible Attacks: Tuyệt Đỉnh Điểm Mù',
+                quote: '"Ngươi thậm chí còn không nhìn thấy đòn tấn công vừa rồi đâu."',
+                dmg: 300,
+                desc: 'Di chuyển siêu thanh tạo hàng chục vệt sáng xanh trắng cắt nát mục tiêu.'
+            }
+        },
+        {
+            id: 'jinyoung',
+            name: 'Jinyoung Park',
+            title: 'Thiên Tài Sao Chép Đời Đầu',
+            gen: 'GEN 0',
+            hp: 1020,
+            speed: 5.5,
+            atk: 1.15,
+            scale: 1.0,
+            auraColor: '#22d3ee',
+            secondaryAura: '#fde047',
+            hairColor: '#334155',
+            hairStyle: 'messy',
+            eyeType: 'normal',
+            outfit: { torso: '#f8fafc', inner: '#0284c7', pants: '#1e293b' },
+            weapon: 'syringe',
+            passiveName: 'Bậc Thầy Copy & Dược Chất',
+            passiveDesc: 'Mỗi đòn combo mô phỏng một thế võ khác nhau, tăng thêm 15% tốc độ hồi Nộ.',
+            uSkill: { name: 'Copy: Thế Hệ Tiền Khởi', type: 'flurry', dmg: 76, desc: 'Tung liền 2 thế võ sao chép từ Gapryong và Tom Lee.' },
+            iSkill: { name: 'Tiêm Thuốc Kích Thích', type: 'buffRush', dmg: 145, desc: 'Tiêm thuốc tăng 30% tốc độ đánh và lao vào càn quét.' },
+            oSkill: {
+                name: 'Bản Sao Điên Loạn Thế Hệ 0',
+                quote: '"Ta đã ghi nhớ tất cả... mọi kỹ năng của thời đại đó!"',
+                dmg: 310,
+                desc: 'Giải phóng toàn bộ kho tàng võ thuật Sao Chép trong cơn điên loạn.'
+            }
+        },
+        {
+            id: 'tomlee',
+            name: 'Tom Lee',
+            title: 'Thiên Tài Chiến Đấu (Ultimate King)',
+            gen: 'GEN 0',
+            hp: 1280,
+            speed: 4.8,
+            atk: 1.28,
+            scale: 1.18,
+            auraColor: '#f59e0b', // Wild Gold/Orange
+            secondaryAura: '#ef4444',
+            hairColor: '#1c1917',
+            hairStyle: 'longWild',
+            eyeType: 'crazed',
+            outfit: { torso: '#78350f', inner: '#f59e0b', pants: '#1c1917' },
+            weapon: 'none',
+            passiveName: 'Bản Năng Hoang Dã',
+            passiveDesc: 'Thể hình khổng lồ tăng tầm đánh thường thêm 20% và gây chảy máu nhẹ khi cào.',
+            uSkill: { name: 'Búng Tay Sóng Xung Kích', type: 'projectile', dmg: 75, desc: 'Búng ngón tay tạo luồng áp lực gió tầm xa đẩy lùi đối thủ.' },
+            iSkill: { name: 'Mãnh Thú Cào Xé', type: 'bleedRush', dmg: 162, desc: 'Lao tới vồ và cào rách mục tiêu, gây hiệu ứng Chảy Máu.' },
+            oSkill: {
+                name: 'Ultimate King: Bản Năng Dã Thú',
+                quote: '"Hãy để ta kiểm tra xem ngươi chịu được bao nhiêu cú vồ của Vua Ăn Xin!"',
+                dmg: 330,
+                desc: 'Hóa thú điên cuồng, liên tục cào xé và dậm nát mặt đất.'
+            }
+        },
+        {
+            id: 'shingen',
+            name: 'Shingen Yamazaki',
+            title: 'Tora Oni - Gia Chủ Yamazaki',
+            gen: 'GEN 0',
+            hp: 1320,
+            speed: 4.7,
+            atk: 1.35,
+            scale: 1.18,
+            auraColor: '#10b981', // Black-Green TUI
+            secondaryAura: '#000000',
+            hairColor: '#090d16',
+            hairStyle: 'longWild',
+            eyeType: 'ui',
+            outfit: { torso: '#064e3b', inner: '#000000', pants: '#022c22' },
+            weapon: 'none',
+            passiveName: 'Xương Đen & TUI (Black Bones)',
+            passiveDesc: 'Miễn nhiễm khựng đòn (Super Armor) trước đòn đánh thường nhịp 1 & 2 của đối thủ.',
+            uSkill: { name: 'Tora Oni Tàn Sát', type: 'guardBreak', dmg: 88, desc: 'Cú vung tay tàn bạo bẻ gãy phòng ngự đối phương.' },
+            iSkill: { name: 'Yamazaki Cuồng Nộ', type: 'rush', dmg: 170, desc: 'Bóp nghẹt và quật đối thủ xuống sàn đấu.' },
+            oSkill: {
+                name: 'True Ultra Instinct: Hủy Diệt Gia Tộc',
+                quote: '"Khi con quái vật Yamazaki thức tỉnh... chỉ còn lại sự tuyệt vọng."',
+                dmg: 350,
+                desc: 'Bộc phát hào quang Đen-Xanh lá, dẫm nát toàn bộ chiến trường.'
+            }
+        },
+        {
+            id: 'shintaro',
+            name: 'Shintaro Yamazaki',
+            title: 'Phó Gia Chủ - Kiếm Muramasa',
+            gen: 'GEN 0',
+            hp: 1060,
+            speed: 5.6,
+            atk: 1.24,
+            scale: 1.04,
+            auraColor: '#e11d48', // Crimson Muramasa
+            secondaryAura: '#0f172a',
+            hairColor: '#0f172a',
+            hairStyle: 'slickBack',
+            eyeType: 'glasses',
+            outfit: { torso: '#1e293b', inner: '#991b1b', pants: '#0f172a' },
+            weapon: 'muramasa',
+            passiveName: 'Yêu Kiếm Muramasa',
+            passiveDesc: 'Đòn chém có tầm xa vượt trội và gây sát thương Chảy Máu theo thời gian.',
+            uSkill: { name: 'Aikido Phản Đòn Trảm', type: 'counter', dmg: 80, desc: 'Hóa giải thế công và chém ngược bằng thanh kiếm đen Muramasa.' },
+            iSkill: { name: 'Huyết Nguyệt Nhất Đao', type: 'bleedRush', dmg: 160, desc: 'Lướt qua mục tiêu với nhát chém chữ thập đỏ thẫm.' },
+            oSkill: {
+                name: 'Quy Tắc Yamazaki: Xử决 Muramasa',
+                quote: '"Vì quy tắc của gia tộc... thanh Muramasa này sẽ chặt đứt cả Xương Đen!"',
+                dmg: 325,
+                desc: 'Liên hoàn kiếm pháp Aikido kết liễu đối thủ trong biển máu đỏ đen.'
+            }
+        },
+
+        // ================= 2. GEN 1 (CÁC VỊ VUA - 5 CHARS) =================
+        {
+            id: 'jameslee',
+            name: 'James Lee (DG)',
+            title: 'Đỉnh Cao Thế Hệ 1 (The Peak)',
+            gen: 'GEN 1',
+            hp: 960,
+            speed: 6.8, // Fastest in game
+            atk: 1.18,
+            scale: 1.0,
+            auraColor: '#f472b6', // Pink/White
+            secondaryAura: '#ffffff',
+            hairColor: '#f43f5e',
+            hairStyle: 'pinkIdol',
+            eyeType: 'pink',
+            outfit: { torso: '#f8fafc', inner: '#f472b6', pants: '#1e293b' },
+            weapon: 'none',
+            passiveName: 'Huyền Thoại Tốc Độ (IA)',
+            passiveDesc: 'Nhân vật có tốc độ di chuyển và ra đòn nhanh nhất game. Đòn nhảy đá được cường hóa.',
+            uSkill: { name: 'Nguyệt Cước Vô Hình', type: 'iaDash', dmg: 74, desc: 'Nhảy lộn vòng đá vệt sáng hồng không thể phản ứng.' },
+            iSkill: { name: 'Bão Cước Hồng Tâm', type: 'flurry', dmg: 158, desc: 'Bay trên không đá liên hoàn 8 nhịp vào điểm mù.' },
+            oSkill: {
+                name: 'The Peak: Cơn Bão Đòn Đánh Vô Hình',
+                quote: '"Hãy kết thúc thế hệ này tại đây thôi."',
+                dmg: 315,
+                desc: 'Biến mất trong ánh sáng hồng-trắng và giáng hàng chục cú đá chí mạng từ trên không.'
+            }
+        },
+        {
+            id: 'kitae',
+            name: 'Kitae Kim',
+            title: 'Vua Seoul - Bạo Chúa Mexico',
+            gen: 'GEN 1',
+            hp: 1220,
+            speed: 5.1,
+            atk: 1.34,
+            scale: 1.14,
+            auraColor: '#991b1b', // Dark Blood Red
+            secondaryAura: '#000000',
+            hairColor: '#0f172a',
+            hairStyle: 'slickBack',
+            eyeType: 'normal',
+            outfit: { torso: '#1c1917', inner: '#7f1d1d', pants: '#0c0a09' },
+            weapon: 'none',
+            passiveName: 'Bạo Lực Đường Phố Mexico',
+            passiveDesc: '25% tỉ lệ Bạo Kích (Critical Hit) gây 1.4x sát thương với hiệu ứng tia chớp đen đỏ.',
+            uSkill: { name: 'Thủ Đao Jichang Tàn Khốc', type: 'guardBreak', dmg: 86, desc: 'Chặt tay cực mạnh theo phong cách Vua Chungcheong phá nát thế thủ.' },
+            iSkill: { name: 'Hành Quyết Kiểu Cartel', type: 'rush', dmg: 168, desc: 'Túm đầu đối thủ đấm liên hoàn tàn nhẫn.' },
+            oSkill: {
+                name: 'King of Seoul: Tuyệt Vọng Đẫm Máu',
+                quote: '"Ngươi nghĩ ngươi hiểu thế nào là bạo lực thực sự sao?"',
+                dmg: 340,
+                desc: 'Sự tàn bạo thuần túy nghiền nát mọi phòng thủ của mục tiêu.'
+            }
+        },
+        {
+            id: 'gun',
+            name: 'Gun Park',
+            title: 'Bạch Quỷ (Shiro Oni)',
+            gen: 'GEN 1',
+            hp: 1260,
+            speed: 5.2,
+            atk: 1.25,
+            scale: 1.07,
+            auraColor: '#e2e8f0', // White/Black UI
+            secondaryAura: '#10b981',
+            hairColor: '#090d16',
+            hairStyle: 'slickBack',
+            eyeType: 'ui',
+            outfit: { torso: '#f59e0b', inner: '#111827', pants: '#111827' },
+            weapon: 'none',
+            passiveName: 'True Ultra Instinct & Kyokushin',
+            passiveDesc: 'Giảm 15% sát thương nhận vào. Máu càng thấp, sát thương của Gun càng tăng mạnh (lên tới +35%).',
+            uSkill: { name: 'Kyokushin Brazil Kick', type: 'guardBreak', dmg: 82, desc: 'Cú đá vòng cầu cắm thẳng từ trên xuống làm vỡ giáp.' },
+            iSkill: { name: 'Bạch Quỷ Liên Hoàn Quyền', type: 'flurry', dmg: 162, desc: 'Đứng vững chịu đòn và tung chuỗi đấm Kyokushin hủy diệt.' },
+            oSkill: {
+                name: 'True Ultra Instinct: Shiro Oni',
+                quote: '"Đêm nay... sẽ có người phải chết dưới tay ta!"',
+                dmg: 335,
+                desc: 'Thức tỉnh bản năng quỷ dữ Yamazaki, tung cú đấm xuyên thấu tạo chấn động toàn màn hình.'
+            }
+        },
+        {
+            id: 'goo',
+            name: 'Goo Kim',
+            title: 'Thiên Tài Vũ Khí',
+            gen: 'GEN 1',
+            hp: 1050,
+            speed: 6.0,
+            atk: 1.28,
+            scale: 1.02,
+            auraColor: '#facc15', // Moonlight Yellow
+            secondaryAura: '#38bdf8',
+            hairColor: '#eab308',
+            hairStyle: 'blondeCurtain',
+            eyeType: 'glasses',
+            outfit: { torso: '#eab308', inner: '#1e293b', pants: '#0f172a' },
+            weapon: 'katana',
+            passiveName: 'Mọi Vật Đều Là Kiếm',
+            passiveDesc: 'Tầm đánh thường xa nhất game nhờ thanh Katana và gây thêm sát thương xuyên giáp.',
+            uSkill: { name: 'Bạt Đao Trảm Khí', type: 'projectile', dmg: 78, desc: 'Rút kiếm cực nhanh phóng ra luồng kiếm khí sắc bén tầm xa.' },
+            iSkill: { name: 'Bão Kiếm Tuyệt Mệnh', type: 'bleedRush', dmg: 165, desc: 'Lao tới chém 10 nhát liên hoàn khiến đối thủ chảy máu.' },
+            oSkill: {
+                name: 'Nguyệt Quang Kiếm Pháp (Moonlight Sword)',
+                quote: '"Khi ta cầm kiếm nghiêm túc... ngay cả ánh trăng cũng bị chém đôi."',
+                dmg: 335,
+                desc: 'Thức kiếm cuối cùng phủ đầy vệt trăng khuyết vàng-xanh cắt nát toàn bộ không gian.'
+            }
+        },
+        {
+            id: 'sinu',
+            name: 'Sinu Han',
+            title: 'Thần Chiến Đấu (God of Combat)',
+            gen: 'GEN 1',
+            hp: 1000,
+            speed: 6.4,
+            atk: 1.15,
+            scale: 1.0,
+            auraColor: '#8b5cf6', // Violet IA
+            secondaryAura: '#ec4899',
+            hairColor: '#1e1b4b',
+            hairStyle: 'slickBack',
+            eyeType: 'normal',
+            outfit: { torso: '#312e81', inner: '#f8fafc', pants: '#1e1b4b' },
+            weapon: 'none',
+            passiveName: '100 Trận Tử Chiến (IA)',
+            passiveDesc: 'Đòn đá Vô Hình dồn ép góc cực nhanh, tăng tốc độ hồi Stamina thêm 25%.',
+            uSkill: { name: 'IA: Cước Xoáy Tử Thần', type: 'iaDash', dmg: 73, desc: 'Lướt vòng qua thế thủ và đá gót chân cực nhanh.' },
+            iSkill: { name: 'Vũ Điệu Thần Chiến Đấu', type: 'flurry', dmg: 155, desc: 'Chuỗi đá liên hoàn không cho đối thủ chạm đất.' },
+            oSkill: {
+                name: 'Khúc Ca Lãng Mạn Big Deal',
+                quote: '"Để bảo vệ con phố của chúng ta... ta sẽ trở thành Thần Chiến Đấu!"',
+                dmg: 310,
+                desc: 'Bùng nổ tốc độ Invisible Attacks tím rực rỡ dồn ép đối phương đến nghẹt thở.'
+            }
+        },
+
+        // ================= 3. GEN 2 (THẾ HỆ THỨ HAI - 11 CHARS) =================
+        {
+            id: 'daniel_og',
+            name: 'Daniel Park (Original)',
+            title: 'Kiệt Tác Của Gun Park',
+            gen: 'GEN 2',
+            hp: 1020,
+            speed: 5.8,
+            atk: 1.16,
+            scale: 0.97,
+            auraColor: '#60a5fa',
+            secondaryAura: '#f8fafc',
+            hairColor: '#0f172a',
+            hairStyle: 'messy',
+            eyeType: 'normal',
+            outfit: { torso: '#1e293b', inner: '#ffffff', pants: '#0f172a' },
+            weapon: 'none',
+            passiveName: 'Thiên Tài Sao Chép & Bất Ngờ',
+            passiveDesc: 'Khi kích hoạt Ultimate, đôi mắt chuyển thành Vô Cực (UI) và tăng mạnh chỉ số.',
+            uSkill: { name: 'Copy: Thủ Đao Jichang', type: 'guardBreak', dmg: 76, desc: 'Chặt tay tốc độ cao kết hợp cú đá đánh lừa thị giác.' },
+            iSkill: { name: 'Copy: James Lee & Gun', type: 'flurry', dmg: 155, desc: 'Kết hợp Kyokushin Karate và đòn đá xoay trên không.' },
+            oSkill: {
+                name: 'Thức Tỉnh Vô Cực (UI Awakening)',
+                quote: '"Cơ thể tự động chiến đấu... vượt qua mọi nỗi sợ hãi!"',
+                dmg: 315,
+                desc: 'Thức tỉnh trạng thái Vô Cực (Ultra Instinct) và tung chuỗi đòn hoàn mỹ.'
+            }
+        },
+        {
+            id: 'daniel_ui',
+            name: 'Daniel Park (Perfect Body)',
+            title: 'Cỗ Máy Tử Thần Vô Cực',
+            gen: 'GEN 2',
+            hp: 1150,
+            speed: 6.2,
+            atk: 1.26,
+            scale: 1.04,
+            auraColor: '#f8fafc', // Pure White/Black UI
+            secondaryAura: '#38bdf8',
+            hairColor: '#090d16',
+            hairStyle: 'messy',
+            eyeType: 'ui',
+            outfit: { torso: '#ffffff', inner: '#090d16', pants: '#090d16' },
+            weapon: 'none',
+            passiveName: 'Phản Xạ Vô Cực (Auto-Counter)',
+            passiveDesc: 'Đỡ đòn (S) đúng lúc (Perfect Guard) sẽ tự động phản kích ngay lập tức mà không tốn Nộ!',
+            uSkill: { name: 'Pivot Blow (Đòn Xoay Trụ)', type: 'counter', dmg: 80, desc: 'Mượn lực đối thủ xoay người đá phản công cực mạnh.' },
+            iSkill: { name: 'Hoàn Mỹ Võ Thuật: Capoeira & UI', type: 'flurry', dmg: 166, desc: 'Thi triển liên hoàn thế võ hoàn hảo không một động tác thừa.' },
+            oSkill: {
+                name: 'Cỗ Máy Tử Thần: Vô Cực Tuyệt Đối',
+                quote: '"[TRẠNG THÁI VÔ THỨC — PHẢN XẠ CHIẾN ĐẤU TỐI ĐA]"',
+                dmg: 335,
+                desc: 'Tốc độ và sức mạnh tuyệt đối nghiền nát đối thủ trong tích tắc.'
+            }
+        },
+        {
+            id: 'johan',
+            name: 'Johan Seong',
+            title: 'Huyền Thoại Bắt Đầu (God Dog)',
+            gen: 'GEN 2',
+            hp: 970,
+            speed: 6.3,
+            atk: 1.22,
+            scale: 1.0,
+            auraColor: '#c084fc', // Multi-color Prism
+            secondaryAura: '#22d3ee',
+            hairColor: '#451a03',
+            hairStyle: 'messy',
+            eyeType: 'prism',
+            outfit: { torso: '#3f3f46', inner: '#a855f7', pants: '#18181b' },
+            weapon: 'none',
+            passiveName: 'Con Đường Riêng: Kỹ Thuật Vô Hạn',
+            passiveDesc: 'Các kỹ năng tạo ra hàng chục quỹ đạo ảo ảnh gây 40% sát thương xuyên qua cả khi đối thủ đang Đỡ (S).',
+            uSkill: { name: 'CQC Tốc Độ Cao', type: 'flurry', dmg: 76, desc: 'Áp sát trong phạm vi 30m và tung 4 đòn CQC chớp nhoáng.' },
+            iSkill: { name: 'Copy Cơ Thể Hoàn Hảo', type: 'rush', dmg: 160, desc: 'Đốt cháy giới hạn cơ bắp để tung chuỗi đòn của UI Daniel.' },
+            oSkill: {
+                name: 'Infinite Technique (Kỹ Thuật Vô Hạn)',
+                quote: '"Một đòn đánh chứa hàng vạn quỹ đạo... ngươi không thể né cũng không thể đỡ!"',
+                dmg: 330,
+                desc: 'Hào quang đa sắc bùng nổ, vô số đòn đánh ảo ảnh ập tới cùng lúc xuyên thủng phòng ngự.'
+            }
+        },
+        {
+            id: 'jake',
+            name: 'Jake Kim',
+            title: 'Thủ Lĩnh Big Deal',
+            gen: 'GEN 2',
+            hp: 1120,
+            speed: 5.3,
+            atk: 1.22,
+            scale: 1.04,
+            auraColor: '#9333ea', // Gapryong Bloodline Purple
+            secondaryAura: '#f43f5e',
+            hairColor: '#0f172a',
+            hairStyle: 'slickBack',
+            eyeType: 'purple',
+            outfit: { torso: '#3b0764', inner: '#f8fafc', pants: '#0f172a' },
+            weapon: 'none',
+            passiveName: 'Huyết Mạch Gapryong & MMA',
+            passiveDesc: 'Kỹ năng khóa siết [U] xuyên qua thế Đỡ đòn. Khi máu dưới 40%, đòn đánh bộc phát hào quang Tím.',
+            uSkill: { name: 'MMA Khóa Siết Bẻ Khớp', type: 'commandGrab', dmg: 82, desc: 'Lao vào vật ngã và khóa khớp đối thủ (Xuyên qua Đỡ đòn).' },
+            iSkill: { name: 'Rồng Đen Big Deal', type: 'rush', dmg: 156, desc: 'Đòn lên gối kết hợp cú đấm trực diện cực nặng.' },
+            oSkill: {
+                name: 'Huyết Mạch Gapryong: Đấm Xuyên Giáp',
+                quote: '"Dù đối thủ có là ai... ta sẽ bảo vệ Big Deal bằng nắm đấm này!"',
+                dmg: 330,
+                desc: 'Thức tỉnh dòng máu của cha, tung cú đấm hào quang Tím đánh bay mọi chướng ngại.'
+            }
+        },
+        {
+            id: 'eli',
+            name: 'Eli Jang',
+            title: 'Đại Gia Đình Hostel',
+            gen: 'GEN 2',
+            hp: 1030,
+            speed: 6.1,
+            atk: 1.19,
+            scale: 1.0,
+            auraColor: '#22c55e', // Green Animal Instinct
+            secondaryAura: '#eab308',
+            hairColor: '#090d16',
+            hairStyle: 'messy',
+            eyeType: 'normal',
+            outfit: { torso: '#14532d', inner: '#f8fafc', pants: '#090d16' },
+            weapon: 'baton',
+            passiveName: 'Dùi Cui & Bản Năng Hoang Dã',
+            passiveDesc: 'Đòn đánh bằng dùi cui và móng vuốt gây hiệu ứng Chảy Máu rút máu đối phương trong 3 giây.',
+            uSkill: { name: 'Dùi Cui Khóa Cổ', type: 'guardBreak', dmg: 75, desc: 'Dùng Baton quật ngang cổ và kéo ngã mục tiêu.' },
+            iSkill: { name: 'Nanh Vuốt Dã Thú Hostel', type: 'bleedRush', dmg: 158, desc: 'Vứt bỏ dùi cui, dùng móng vuốt xé toạc đối thủ gây Chảy Máu nặng.' },
+            oSkill: {
+                name: 'Bản Năng Hoang Dã: Cuồng Thú Săn Mồi',
+                quote: '"Đừng bao giờ động vào gia đình của tao!"',
+                dmg: 318,
+                desc: 'Hóa thành mãnh thú mắt xanh lục, cào xé điên cuồng từ mọi hướng.'
+            }
+        },
+        {
+            id: 'samuel',
+            name: 'Samuel Seo',
+            title: 'Chó Điên Nhiệt Huyết (Heat Mode)',
+            gen: 'GEN 2',
+            hp: 1200,
+            speed: 5.1,
+            atk: 1.24,
+            scale: 1.10,
+            auraColor: '#db2777', // Magenta Heat Mode
+            secondaryAura: '#dc2626',
+            hairColor: '#0f172a',
+            hairStyle: 'slickBack',
+            eyeType: 'crazed',
+            outfit: { torso: '#831843', inner: '#fbcfe8', tie: '#be123c', pants: '#1e1b4b' },
+            weapon: 'none',
+            passiveName: 'Điên Loạn (Heat Mode)',
+            passiveDesc: 'Càng đánh trúng nhiều đòn liên tiếp, sát thương và tốc độ của Samuel càng tăng cao.',
+            uSkill: { name: 'Tay Gấu Đập Nát', type: 'guardBreak', dmg: 84, desc: 'Cú đấm thô bạo bằng nắm đấm quấn xích phá vỡ phòng thủ.' },
+            iSkill: { name: 'Túm Cổ Quăng Quật', type: 'commandGrab', dmg: 160, desc: 'Nắm mặt đối thủ đập mạnh xuống nền đất liên tiếp.' },
+            oSkill: {
+                name: 'Heat Mode: Cơn Thịnh Nộ Của Vua',
+                quote: '"Tao mới là người duy nhất xứng đáng trở thành Vua!"',
+                dmg: 325,
+                desc: 'Điên cuồng lao tới đấm đập và nghiền nát đối thủ không thương tiếc.'
+            }
+        },
+        {
+            id: 'zack',
+            name: 'Zack Lee',
+            title: 'Pháo Đài Sắt (Iron Fortress)',
+            gen: 'GEN 2',
+            hp: 1180,
+            speed: 6.1,
+            atk: 1.16,
+            scale: 1.03,
+            auraColor: '#06b6d4', // Cyan/Silver Iron Fortress
+            secondaryAura: '#e2e8f0',
+            hairColor: '#090d16',
+            hairStyle: 'buzz',
+            eyeType: 'normal',
+            outfit: { torso: '#0e7490', inner: '#f8fafc', pants: '#0f172a', gloves: '#ef4444' },
+            weapon: 'none',
+            passiveName: 'Pháo Đài Sắt Của Gongseob Ji',
+            passiveDesc: 'Khi Đỡ đòn (S), giảm 80% sát thương thay vì 65% và hồi Nộ nhanh hơn.',
+            uSkill: { name: 'In-Fighting: Đấm Móc Gan', type: 'iaDash', dmg: 75, desc: 'Lướt bộ pháp cực nhanh áp sát đấm thốc vào sườn.' },
+            iSkill: { name: 'Liên Hoàn Đấm Ánh Sáng', type: 'flurry', dmg: 155, desc: 'Tung 12 cú Jab & Hook tốc độ chớp giật.' },
+            oSkill: {
+                name: 'Gongseob Ji Counter (Phản Đòn Quyết Tử)',
+                quote: '"Một bước duy nhất... đặt cược tất cả vào cú đấm phản công này!"',
+                dmg: 335,
+                desc: 'Chịu đựng mọi sát thương và tung cú đấm móc phải chí mạng lật ngược thế cờ.'
+            }
+        },
+        {
+            id: 'vasco',
+            name: 'Vasco (Euntae Lee)',
+            title: 'Người Hùng Burn Knuckles',
+            gen: 'GEN 2',
+            hp: 1220,
+            speed: 4.9,
+            atk: 1.32,
+            scale: 1.09,
+            auraColor: '#f97316', // Hero Orange/Red
+            secondaryAura: '#facc15',
+            hairColor: '#1c1917',
+            hairStyle: 'buzz',
+            eyeType: 'normal',
+            outfit: { torso: '#9a3412', inner: '#fdba74', pants: '#1c1917' },
+            weapon: 'none',
+            passiveName: 'Cấm Kỹ Muay Thái Brekdak',
+            passiveDesc: 'Sát thương đơn mục tiêu cực lớn, mọi đòn đánh nhịp cuối combo đều gây chấn động mặt đất.',
+            uSkill: { name: 'Cấm Kỹ Số 1: Phá Trụ Cước', type: 'guardBreak', dmg: 88, desc: 'Cú đá thấp cực nặng làm gãy thế phòng thủ của kẻ địch.' },
+            iSkill: { name: 'Lên Gối Nén Khí Brekdak', type: 'rush', dmg: 170, desc: 'Lao tới thúc đầu gối làm vỡ vụn xương sườn đối phương.' },
+            oSkill: {
+                name: 'Hero Mode: Trừng Phạt Kẻ Xấu',
+                quote: '"Kẻ xấu... phải bị trừng phạt đến cùng!"',
+                dmg: 345,
+                desc: 'Kích hoạt Chế Độ Anh Hùng, đôi mắt rực lửa tung chuỗi đòn Muay Thái hủy diệt.'
+            }
+        },
+        {
+            id: 'jay',
+            name: 'Jay Hong',
+            title: 'Hộ Vệ Thầm Lặng',
+            gen: 'GEN 2',
+            hp: 990,
+            speed: 6.2,
+            atk: 1.18,
+            scale: 0.99,
+            auraColor: '#fde047',
+            secondaryAura: '#38bdf8',
+            hairColor: '#facc15',
+            hairStyle: 'blondeCurtain',
+            eyeType: 'hairCovered',
+            outfit: { torso: '#1e293b', inner: '#eab308', pants: '#0f172a' },
+            weapon: 'kali',
+            passiveName: 'Systema & Kali Arnis',
+            passiveDesc: 'Sử dụng gậy đôi Kali Arnis giúp chuỗi đánh thường 4 nhịp ra đòn nhanh hơn 25%.',
+            uSkill: { name: 'Kali Arnis: Song Kích', type: 'flurry', dmg: 75, desc: 'Vung 2 gậy Arnis đập liên hoàn vào các khớp xương.' },
+            iSkill: { name: 'Systema: Triệt Hạ Tốc Độ', type: 'rush', dmg: 158, desc: 'Áp sát khóa tay và quật gậy tốc độ ánh sáng.' },
+            oSkill: {
+                name: 'Lethal Kali Arnis: Đội Mũ Bảo Hiểm',
+                quote: '"..." (Đội mũ bảo hiểm cho đối thủ rồi mới tung toàn lực)',
+                dmg: 320,
+                desc: 'Giải phóng sát chiêu Kali Arnis nguy hiểm chết người của Sophia.'
+            }
+        },
+        {
+            id: 'vinjin',
+            name: 'Vin Jin',
+            title: 'Ác Quỷ Cheonliang',
+            gen: 'GEN 2',
+            hp: 1100,
+            speed: 5.5,
+            atk: 1.26,
+            scale: 1.04,
+            auraColor: '#dc2626',
+            secondaryAura: '#1e293b',
+            hairColor: '#0f172a',
+            hairStyle: 'messy',
+            eyeType: 'sunglasses',
+            outfit: { torso: '#f8fafc', inner: '#1e293b', pants: '#f8fafc' },
+            weapon: 'none',
+            passiveName: 'Ssireum Của Mujin Jin',
+            passiveDesc: 'Chuyên gia chụp bắt xương: Chiêu [U] và [I] có thể chụp và quật ngã đối thủ xuyên qua Đỡ đòn.',
+            uSkill: { name: 'Bóp Xương Quật Ngã (Ssireum)', type: 'commandGrab', dmg: 85, desc: 'Nắm chặt xương sườn đối thủ và quật mạnh xuống đất (Xuyên Giáp).' },
+            iSkill: { name: 'Kudo Tàn Nhẫn: Bẻ Khớp', type: 'commandGrab', dmg: 164, desc: 'Tháo kính râm, lao vào chụp cổ và bẻ gãy thế phòng ngự.' },
+            oSkill: {
+                name: 'Mujin Jin Ssireum: Ác Quỷ Cheonliang',
+                quote: '"Để tao cho mày nhớ lại nỗi kinh hoàng ở Cheonliang!"',
+                dmg: 332,
+                desc: 'Lực nắm siêu phàm nhổ bật mặt đất và quật nát mục tiêu.'
+            }
+        },
+        {
+            id: 'olly',
+            name: 'Olly Wang',
+            title: 'Kẻ Vô Cảm (Hostel A)',
+            gen: 'GEN 2',
+            hp: 1240,
+            speed: 5.2,
+            atk: 1.18,
+            scale: 1.02,
+            auraColor: '#14b8a6', // Eerie Teal/Green
+            secondaryAura: '#64748b',
+            hairColor: '#134e4a',
+            hairStyle: 'longWild',
+            eyeType: 'crazed',
+            outfit: { torso: '#115e59', inner: '#f8fafc', pants: '#0f172a' },
+            weapon: 'none',
+            passiveName: 'Vô Cảm (Painless)',
+            passiveDesc: 'Không cảm thấy đau: Không bị khựng (Super Armor) khi trúng đòn đánh thường nhịp 1 & 2 khi máu trên 30%.',
+            uSkill: { name: 'Aikido Của Gun', type: 'commandGrab', dmg: 78, desc: 'Bất chấp thương tích lao vào vặn khớp quật ngã đối phương.' },
+            iSkill: { name: 'Cuồng Công Vô Cảm', type: 'rush', dmg: 155, desc: 'Cười điên dại lao thẳng qua đòn đánh của kẻ địch để tấn công.' },
+            oSkill: {
+                name: 'Khoái Cảm Không Đau Đớn',
+                quote: '"Tao không cảm thấy đau chút nào cả... ha ha ha!"',
+                dmg: 315,
+                desc: 'Tấn công bất chấp sinh tử bằng Aikido kết hợp bạo lực đường phố.'
+            }
+        }
+    ];
+
+    /**
+     * ============================================================================
+     * 3. INPUT CONTROLLER (P1 & P2 KEYBOARD HANDLER)
+     * ============================================================================
+     */
+    const Input = {
+        keys: {},
+        justPressed: {},
+        init() {
+            window.addEventListener('keydown', (e) => {
+                // Prevent default scrolling for arrows and space
+                if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(e.code)) {
+                    e.preventDefault();
+                }
+                if (!this.keys[e.code]) {
+                    this.justPressed[e.code] = true;
+                }
+                this.keys[e.code] = true;
+            });
+            window.addEventListener('keyup', (e) => {
+                this.keys[e.code] = false;
+            });
+        },
+        clearJustPressed() {
+            this.justPressed = {};
+        },
+        // P1 Controls: A/D Move, W/K Jump, S Block, J Attack, U Sub, L Dash, I Skill, O Ult
+        p1: {
+            left: () => !!Input.keys['KeyA'],
+            right: () => !!Input.keys['KeyD'],
+            down: () => !!Input.keys['KeyS'],
+            jump: () => !!(Input.justPressed['KeyW'] || Input.justPressed['KeyK']),
+            atk: () => !!Input.justPressed['KeyJ'],
+            sub: () => !!Input.justPressed['KeyU'],
+            dash: () => !!Input.justPressed['KeyL'],
+            skill: () => !!Input.justPressed['KeyI'],
+            ult: () => !!Input.justPressed['KeyO']
+        },
+        // P2 Controls: Arrows + Numpad 1..6 (Also supports fallback M, ., / for laptops without numpad)
+        p2: {
+            left: () => !!Input.keys['ArrowLeft'],
+            right: () => !!Input.keys['ArrowRight'],
+            down: () => !!Input.keys['ArrowDown'],
+            jump: () => !!(Input.justPressed['ArrowUp'] || Input.justPressed['Numpad2']),
+            atk: () => !!(Input.justPressed['Numpad1'] || Input.justPressed['Digit1']),
+            sub: () => !!(Input.justPressed['Numpad4'] || Input.justPressed['Digit4']),
+            dash: () => !!(Input.justPressed['Numpad3'] || Input.justPressed['Digit3']),
+            skill: () => !!(Input.justPressed['Numpad5'] || Input.justPressed['Digit5']),
+            ult: () => !!(Input.justPressed['Numpad6'] || Input.justPressed['Digit6'])
+        }
+    };
+    Input.init();
+
+    /**
+     * ============================================================================
+     * 4. CUSTOM 2D VECTOR / ANIME FIGHTER RIG RENDERER
+     * ============================================================================
+     */
+    const FighterRenderer = {
+        drawFighter(ctx, f, isPreview = false) {
+            ctx.save();
+            const c = f.data;
+            const scale = (c.scale || 1.0) * (isPreview ? 1.15 : 1.0);
+            ctx.translate(f.x, f.y);
+            ctx.scale(f.facing * scale, scale);
+
+            const time = performance.now() * 0.008;
+            const isMoving = Math.abs(f.vx) > 0.5 && f.onGround;
+            const isAir = !f.onGround;
+
+            // 1. Ground Shadow
+            if (!isPreview) {
+                ctx.fillStyle = 'rgba(0,0,0,0.45)';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 26, 7, 0, 0, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // 2. Character Aura (Intensifies when Awakened or high Energy)
+            const hasAura = f.awakenedTimer > 0 || f.energy >= 100 || f.state === 'SKILL' || f.state === 'ULT' || isPreview;
+            if (hasAura) {
+                const auraAlpha = (f.awakenedTimer > 0 || f.state === 'ULT') ? 0.55 : 0.28;
+                const pulse = Math.sin(time * 2.5) * 5;
+                const grad = ctx.createRadialGradient(0, -52, 8, 0, -52, 58 + pulse);
+                grad.addColorStop(0, c.auraColor);
+                grad.addColorStop(0.5, c.secondaryAura || c.auraColor);
+                grad.addColorStop(1, 'transparent');
+                ctx.globalAlpha = auraAlpha;
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.ellipse(0, -52, 44 + pulse, 64 + pulse, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Rising Aura Flame Rings
+                ctx.strokeStyle = c.auraColor;
+                ctx.lineWidth = 2;
+                for (let i = 0; i < 3; i++) {
+                    const yOff = ((time * 18 + i * 28) % 85);
+                    ctx.globalAlpha = Math.max(0, (1 - yOff / 85) * 0.65);
+                    ctx.beginPath();
+                    ctx.arc(Math.sin(time + i) * 6, -10 - yOff, 18 - yOff * 0.12, 0, Math.PI);
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+
+            // Calculate Procedural Limb Angles based on State
+            let bodyTilt = 0;
+            let bobY = Math.sin(time * 1.5) * 2;
+            let leftArmAngle = 0.4;
+            let rightArmAngle = -0.35;
+            let leftLegAngle = 0.15;
+            let rightLegAngle = -0.15;
+
+            if (isMoving) {
+                bobY = Math.abs(Math.sin(time * 3.2)) * -4;
+                bodyTilt = 0.14;
+                leftLegAngle = Math.sin(time * 3.2) * 0.65;
+                rightLegAngle = -Math.sin(time * 3.2) * 0.65;
+                leftArmAngle = -Math.sin(time * 3.2) * 0.5;
+                rightArmAngle = Math.sin(time * 3.2) * 0.5;
+            } else if (isAir) {
+                leftLegAngle = 0.4;
+                rightLegAngle = -0.55;
+                leftArmAngle = -0.6;
+                rightArmAngle = -0.8;
+            }
+
+            if (f.state === 'BLOCK') {
+                bodyTilt = -0.08;
+                rightArmAngle = -1.35;
+                leftArmAngle = -1.15;
+            } else if (f.state === 'HIT') {
+                bodyTilt = -0.35;
+                rightArmAngle = 0.7;
+                leftArmAngle = 0.9;
+            } else if (f.state === 'ATTACK' || f.state === 'SUB' || f.state === 'SKILL' || f.state === 'ULT') {
+                const step = f.comboStep || 1;
+                bodyTilt = 0.24;
+                if (step === 1) {
+                    rightArmAngle = -1.55; // Straight Jab
+                } else if (step === 2) {
+                    leftArmAngle = -1.6;
+                    rightLegAngle = -1.1; // Kick
+                } else if (step === 3) {
+                    rightArmAngle = -1.85;
+                    leftArmAngle = -1.4;
+                } else {
+                    rightArmAngle = -1.65;
+                    rightLegAngle = -1.35;
+                }
+            }
+
+            ctx.translate(0, bobY);
+            ctx.rotate(bodyTilt);
+
+            // 3. Legs
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = 9;
+            ctx.strokeStyle = c.outfit.pants || '#0f172a';
+
+            // Back Leg
+            ctx.save();
+            ctx.translate(-5, -36);
+            ctx.rotate(leftLegAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-4, 34);
+            ctx.stroke();
+            ctx.restore();
+
+            // Front Leg
+            ctx.save();
+            ctx.translate(5, -36);
+            ctx.rotate(rightLegAngle);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(6, 34);
+            ctx.stroke();
+            ctx.restore();
+
+            // 4. Back Arm
+            ctx.save();
+            ctx.translate(-7, -68);
+            ctx.rotate(leftArmAngle);
+            ctx.strokeStyle = c.outfit.torso;
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(14, 20);
+            ctx.stroke();
+            // Fist
+            ctx.fillStyle = c.outfit.gloves || '#fde68a';
+            ctx.beginPath();
+            ctx.arc(15, 21, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // 5. Torso / Jacket / Suit
+            ctx.fillStyle = c.outfit.torso;
+            ctx.beginPath();
+            ctx.roundRect(-13, -74, 26, 40, 6);
+            ctx.fill();
+
+            // Inner Shirt / Chest V-neck
+            if (c.outfit.inner) {
+                ctx.fillStyle = c.outfit.inner;
+                ctx.beginPath();
+                ctx.moveTo(-6, -74);
+                ctx.lineTo(6, -74);
+                ctx.lineTo(2, -46);
+                ctx.lineTo(-2, -46);
+                ctx.closePath();
+                ctx.fill();
+            }
+            // Tie
+            if (c.outfit.tie) {
+                ctx.fillStyle = c.outfit.tie;
+                ctx.fillRect(-1.5, -70, 3, 20);
+            }
+
+            // 6. Head & Face
+            ctx.save();
+            ctx.translate(0, -88);
+
+            // Head Circle
+            ctx.fillStyle = '#fde68a';
+            ctx.beginPath();
+            ctx.arc(0, 0, 13.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Hair Styles
+            ctx.fillStyle = c.hairColor;
+            if (c.hairStyle === 'fedora') {
+                // Gapryong Fedora Hat
+                ctx.fillStyle = '#1e293b';
+                ctx.beginPath();
+                ctx.ellipse(0, -10, 20, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.roundRect(-12, -22, 24, 12, 4);
+                ctx.fill();
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillRect(-12, -13, 24, 2.5);
+            } else if (c.hairStyle === 'slickBack') {
+                ctx.beginPath();
+                ctx.arc(-2, -3, 14, Math.PI * 0.85, Math.PI * 2.05);
+                ctx.lineTo(-15, -8);
+                ctx.closePath();
+                ctx.fill();
+            } else if (c.hairStyle === 'longWild') {
+                ctx.beginPath();
+                ctx.arc(-2, -2, 15, Math.PI * 0.6, Math.PI * 2.2);
+                ctx.lineTo(-18, 18);
+                ctx.lineTo(-8, 12);
+                ctx.closePath();
+                ctx.fill();
+            } else if (c.hairStyle === 'pinkIdol' || c.hairStyle === 'blondeCurtain' || c.hairStyle === 'messy') {
+                ctx.beginPath();
+                ctx.arc(0, -4, 14.5, Math.PI * 0.9, Math.PI * 2.15);
+                ctx.lineTo(14, 2);
+                ctx.lineTo(7, -3);
+                ctx.lineTo(2, 3);
+                ctx.lineTo(-6, -3);
+                ctx.closePath();
+                ctx.fill();
+            } else {
+                // Buzz cut
+                ctx.beginPath();
+                ctx.arc(0, -2, 14, Math.PI, Math.PI * 2);
+                ctx.fill();
+            }
+
+            // Signature Eyes (UI / Purple / Pink / Sunglasses / Glasses)
+            const activeUI = c.eyeType === 'ui' || (c.id === 'daniel_og' && f.awakenedTimer > 0);
+            if (c.eyeType === 'sunglasses') {
+                // Vin Jin Pitch-black Sunglasses
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(1, -4, 11, 6);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(3, -3, 2, 2);
+                ctx.fillRect(8, -3, 2, 2);
+            } else if (c.eyeType === 'hairCovered') {
+                // Jay Hong hair covering eyes
+                ctx.fillStyle = c.hairColor;
+                ctx.beginPath();
+                ctx.moveTo(-4, -8);
+                ctx.lineTo(15, -6);
+                ctx.lineTo(13, 3);
+                ctx.lineTo(0, 1);
+                ctx.closePath();
+                ctx.fill();
+            } else if (activeUI) {
+                // Ultra Instinct: Black sclera + glowing white pupil + eye trail
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(3, -3.5, 8, 4.5);
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowColor = '#ffffff';
+                ctx.shadowBlur = 8;
+                ctx.fillRect(6, -2.5, 3, 2.5);
+                ctx.shadowBlur = 0;
+            } else {
+                // Glowing Colored Eyes
+                let eyeCol = '#0f172a';
+                if (c.eyeType === 'purple' || (c.id === 'jake' && f.awakenedTimer > 0)) eyeCol = '#c084fc';
+                else if (c.eyeType === 'pink') eyeCol = '#f472b6';
+                else if (c.eyeType === 'prism') eyeCol = '#38bdf8';
+                else if (c.eyeType === 'crazed') eyeCol = '#ef4444';
+
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(3, -3, 7, 4);
+                ctx.fillStyle = eyeCol;
+                ctx.shadowColor = eyeCol;
+                ctx.shadowBlur = 6;
+                ctx.fillRect(6, -2.5, 3.5, 3);
+                ctx.shadowBlur = 0;
+
+                if (c.eyeType === 'glasses') {
+                    ctx.strokeStyle = '#fbbf24';
+                    ctx.lineWidth = 1.3;
+                    ctx.strokeRect(2.5, -4, 8.5, 5.5);
+                }
+            }
+            ctx.restore(); // End Head
+
+            // 7. Front Arm & Weapon
+            ctx.save();
+            ctx.translate(6, -68);
+            ctx.rotate(rightArmAngle);
+            ctx.strokeStyle = c.outfit.torso;
+            ctx.lineWidth = 8.5;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(16, 20);
+            ctx.stroke();
+
+            // Hand
+            ctx.fillStyle = c.outfit.gloves || '#fde68a';
+            ctx.beginPath();
+            ctx.arc(17, 21, 5.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Weapons in Hand
+            if (c.weapon === 'katana' || c.weapon === 'muramasa') {
+                ctx.save();
+                ctx.translate(17, 21);
+                ctx.rotate(0.55);
+                // Hilt
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-3, -10, 5, 12);
+                ctx.fillStyle = '#eab308';
+                ctx.fillRect(-6, 0, 11, 3);
+                // Blade
+                ctx.fillStyle = c.weapon === 'muramasa' ? '#090d16' : '#e2e8f0';
+                ctx.strokeStyle = c.weapon === 'muramasa' ? '#e11d48' : '#38bdf8';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-2, 3);
+                ctx.lineTo(2.5, 3);
+                ctx.lineTo(0.5, 52);
+                ctx.lineTo(-2, 48);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+            } else if (c.weapon === 'baton' || c.weapon === 'kali') {
+                ctx.save();
+                ctx.translate(17, 21);
+                ctx.rotate(0.5);
+                ctx.fillStyle = c.weapon === 'kali' ? '#ca8a04' : '#334155';
+                ctx.fillRect(-2, 0, 4.5, 34);
+                ctx.restore();
+            } else if (c.weapon === 'syringe' && (f.state === 'SKILL' || isPreview)) {
+                ctx.save();
+                ctx.translate(17, 21);
+                ctx.fillStyle = '#22d3ee';
+                ctx.fillRect(-2, 0, 4, 16);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(-2, 0, 4, 16);
+                ctx.restore();
+            }
+            ctx.restore(); // End Front Arm
+
+            // 8. Guard Shield Effect
+            if (f.state === 'BLOCK') {
+                ctx.strokeStyle = c.id === 'zack' ? '#22d3ee' : '#f8fafc';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(16, -54, 34, -Math.PI * 0.42, Math.PI * 0.42);
+                ctx.stroke();
+            }
+
+            ctx.restore();
+        }
+    };
+
+    /**
+     * ============================================================================
+     * 5. FIGHTER CLASS & SMART AI STATE MACHINE
+     * ============================================================================
+     */
+    class Fighter {
+        constructor(charData, x, facing, isPlayer1, isAI = false) {
+            this.data = charData;
+            this.x = x;
+            this.y = 0; // Set relative to groundY in arena
+            this.vx = 0;
+            this.vy = 0;
+            this.facing = facing; // 1 = Right, -1 = Left
+            this.isPlayer1 = isPlayer1;
+            this.isAI = isAI;
+
+            this.maxHp = charData.hp;
+            this.hp = charData.hp;
+            this.displayHp = charData.hp;
+
+            this.maxStamina = 100;
+            this.stamina = 100;
+
+            this.maxEnergy = 300; // 3 Bars (100, 200, 300)
+            this.energy = 100; // Start match with 1 Bar like BVN!
+
+            this.onGround = true;
+            this.jumpsLeft = 2;
+
+            // States: IDLE, MOVE, JUMP, BLOCK, ATTACK, SUB, SKILL, ULT, DASH, HIT, KO
+            this.state = 'IDLE';
+            this.stateTimer = 0;
+            this.comboStep = 0;
+            this.comboWindow = 0;
+            this.hasHitCurrentSwing = false;
+
+            // Cooldowns & Buffs
+            this.uCooldown = 0;
+            this.blockStartTime = 0;
+            this.awakenedTimer = 0;
+            this.speedBuffTimer = 0;
+            this.bleedTimer = 0;
+            this.bleedTick = 0;
+
+            // Combo Counter tracking on opponent
+            this.comboCount = 0;
+            this.comboDamage = 0;
+            this.comboResetTimer = 0;
+
+            // AI Decision Timers
+            this.aiDecisionTimer = 0;
+            this.aiState = 'APPROACH';
+        }
+
+        getSpeed() {
+            let spd = this.data.speed;
+            if (this.awakenedTimer > 0) spd *= 1.16;
+            if (this.speedBuffTimer > 0) spd *= 1.28;
+            return spd;
+        }
+
+        getAtkMultiplier() {
+            let mult = this.data.atk;
+            if (this.awakenedTimer > 0) mult *= 1.2;
+            // Gun Park & Gapryong low HP passive
+            if ((this.data.id === 'gun' || this.data.id === 'gapryong') && this.hp < this.maxHp * 0.5) {
+                mult *= 1.28;
+            }
+            // Samuel Heat Mode scales with combo
+            if (this.data.id === 'samuel' && this.comboCount >= 3) {
+                mult *= 1.18;
+            }
+            return mult;
+        }
+
+        addEnergy(amount) {
+            this.energy = Math.min(this.maxEnergy, this.energy + amount);
+        }
+
+        update(groundY, stageWidth, opponent) {
+            // Smooth delayed HP bar
+            if (this.displayHp > this.hp) {
+                this.displayHp -= Math.max(0.8, (this.displayHp - this.hp) * 0.08);
+            } else {
+                this.displayHp = this.hp;
+            }
+
+            // Regenerate Stamina
+            if (this.state !== 'DASH' && this.state !== 'BLOCK') {
+                this.stamina = Math.min(this.maxStamina, this.stamina + 0.26);
+            }
+
+            // Timers
+            if (this.uCooldown > 0) this.uCooldown--;
+            if (this.awakenedTimer > 0) this.awakenedTimer--;
+            if (this.speedBuffTimer > 0) this.speedBuffTimer--;
+            if (this.comboWindow > 0) {
+                this.comboWindow--;
+                if (this.comboWindow === 0) this.comboStep = 0;
+            }
+            if (this.comboResetTimer > 0) {
+                this.comboResetTimer--;
+                if (this.comboResetTimer === 0) {
+                    this.comboCount = 0;
+                    this.comboDamage = 0;
+                }
+            }
+
+            // Bleed DoT Effect (Eli, Shintaro, Goo, Tom Lee)
+            if (this.bleedTimer > 0) {
+                this.bleedTimer--;
+                this.bleedTick++;
+                if (this.bleedTick % 20 === 0 && this.hp > 1) {
+                    this.hp = Math.max(1, this.hp - 5);
+                    BattleEngine.spawnParticles(this.x, this.y - 55, '#dc2626', 5, 'blood');
+                }
+            }
+
+            // Training Mode Auto-Refills
+            if (GameApp.mode === 'training') {
+                this.energy = 300;
+                this.stamina = 100;
+                if (this.state === 'IDLE' && this.hp < this.maxHp) {
+                    this.hp = Math.min(this.maxHp, this.hp + 6);
+                }
+            }
+
+            // KO Check
+            if (this.hp <= 0 && this.state !== 'KO') {
+                this.hp = 0;
+                this.state = 'KO';
+                this.vx = -this.facing * 6;
+                this.vy = -8;
+                SoundFX.play('ko');
+                BattleEngine.onFighterKO(this, opponent);
+                return;
+            }
+
+            if (this.state === 'KO') {
+                this.applyPhysics(groundY, stageWidth);
+                return;
+            }
+
+            // Handle State Duration
+            if (this.stateTimer > 0) {
+                this.stateTimer--;
+                // Spawn Afterimages during Dash, IA, Skill, or Ult
+                if (['DASH', 'SUB', 'SKILL', 'ULT'].includes(this.state) && this.stateTimer % 2 === 0) {
+                    BattleEngine.spawnAfterimage(this);
+                }
+                // Check Attack Hitbox during active frames
+                if (['ATTACK', 'SUB', 'SKILL', 'ULT'].includes(this.state)) {
+                    this.checkActiveAttackHit(opponent);
+                }
+                if (this.stateTimer === 0) {
+                    this.state = 'IDLE';
+                    this.hasHitCurrentSwing = false;
+                }
+            }
+
+            // Process Player or AI Controls
+            if (this.isAI) {
+                this.updateAI(opponent);
+            } else {
+                const ctrl = this.isPlayer1 ? Input.p1 : Input.p2;
+                this.handleControls(ctrl, opponent);
+            }
+
+            // Auto-face opponent when Idle or Moving
+            if (['IDLE', 'MOVE', 'BLOCK'].includes(this.state)) {
+                this.facing = (opponent.x >= this.x) ? 1 : -1;
+            }
+
+            this.applyPhysics(groundY, stageWidth);
+        }
+
+        applyPhysics(groundY, stageWidth) {
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // Gravity
+            if (this.y < groundY) {
+                this.vy += 0.72;
+                this.onGround = false;
+            } else {
+                this.y = groundY;
+                this.vy = 0;
+                this.onGround = true;
+                this.jumpsLeft = 2;
+            }
+
+            // Friction
+            if (['IDLE', 'BLOCK', 'HIT', 'KO'].includes(this.state)) {
+                this.vx *= 0.78;
+            } else if (['ATTACK', 'SUB', 'SKILL', 'ULT'].includes(this.state)) {
+                this.vx *= 0.88;
+            }
+
+            // Stage Boundaries
+            const margin = 45;
+            if (this.x < margin) this.x = margin;
+            if (this.x > stageWidth - margin) this.x = stageWidth - margin;
+        }
+
+        handleControls(ctrl, opponent) {
+            // 1. BVN SUBSTITUTION ESCAPE (Thế Thân thoát đòn bằng phím L khi đang bị HIT)
+            if (this.state === 'HIT' && ctrl.dash() && this.stamina >= 45) {
+                this.performSubstitution(opponent);
+                return;
+            }
+
+            // Cannot act while stunned or mid-skill unless chaining
+            const canCancelIntoSkill = (this.state === 'ATTACK' && this.hasHitCurrentSwing);
+            const canCancelSubIntoSkill = (this.state === 'SUB' && this.hasHitCurrentSwing);
+
+            if (['HIT', 'DASH', 'SKILL', 'ULT'].includes(this.state)) return;
+
+            // 2. ULTIMATE SKILL (O - Costs 300 Energy / 3 Bars)
+            if (ctrl.ult() && this.energy >= 300) {
+                this.startUltimate(opponent);
+                return;
+            }
+
+            // 3. SPECIAL SKILL (I - Costs 100 Energy / 1 Bar)
+            if (ctrl.skill() && this.energy >= 100) {
+                this.startSpecialSkill(opponent);
+                return;
+            }
+
+            // 4. SUB-SKILL / GUARD BREAK (U - 3.2s Cooldown)
+            if (ctrl.sub() && this.uCooldown <= 0 && (this.state === 'IDLE' || this.state === 'MOVE' || canCancelIntoSkill)) {
+                this.startSubSkill(opponent);
+                return;
+            }
+
+            if (this.state === 'SUB') return;
+
+            // 5. HIGH-SPEED DASH (L - Costs 30 Stamina)
+            if (ctrl.dash() && this.stamina >= 30) {
+                this.startDash();
+                return;
+            }
+
+            // 6. NORMAL 4-HIT COMBO (J)
+            if (ctrl.atk()) {
+                if (this.state === 'IDLE' || this.state === 'MOVE' || (this.state === 'ATTACK' && this.stateTimer <= 8)) {
+                    this.startNormalAttack();
+                    return;
+                }
+            }
+
+            if (this.state === 'ATTACK') return;
+
+            // 7. BLOCK / GUARD (S)
+            if (ctrl.down() && this.onGround) {
+                if (this.state !== 'BLOCK') {
+                    this.blockStartTime = performance.now();
+                }
+                this.state = 'BLOCK';
+                this.vx = 0;
+                return;
+            } else if (this.state === 'BLOCK') {
+                this.state = 'IDLE';
+            }
+
+            // 8. JUMP / DOUBLE JUMP (W or K)
+            if (ctrl.jump() && this.jumpsLeft > 0) {
+                this.vy = -13.2;
+                this.onGround = false;
+                this.jumpsLeft--;
+                SoundFX.play('dash');
+                BattleEngine.spawnParticles(this.x, this.y, '#94a3b8', 6, 'dust');
+            }
+
+            // 9. HORIZONTAL MOVE (A / D)
+            if (ctrl.left()) {
+                this.vx = -this.getSpeed();
+                this.state = 'MOVE';
+            } else if (ctrl.right()) {
+                this.vx = this.getSpeed();
+                this.state = 'MOVE';
+            } else {
+                this.state = 'IDLE';
+            }
+        }
+
+        performSubstitution(opponent) {
+            this.stamina -= 45;
+            this.state = 'DASH';
+            this.stateTimer = 12;
+            SoundFX.play('dash');
+            BattleEngine.spawnFloatingText(this.x, this.y - 95, 'THẾ THÂN! (ESCAPE)', '#22d3ee');
+            BattleEngine.spawnParticles(this.x, this.y - 50, '#e2e8f0', 18, 'smoke');
+
+            // Teleport behind opponent
+            const behindX = opponent.x - opponent.facing * 95;
+            this.x = Math.max(55, Math.min(BattleEngine.width - 55, behindX));
+            this.y = BattleEngine.groundY;
+            this.vy = 0;
+            this.facing = (opponent.x >= this.x) ? 1 : -1;
+            BattleEngine.spawnAfterimage(this);
+        }
+
+        startDash() {
+            this.stamina -= 30;
+            this.state = 'DASH';
+            this.stateTimer = 13;
+            this.vx = this.facing * (this.getSpeed() * 2.55);
+            SoundFX.play('dash');
+            BattleEngine.spawnAfterimage(this);
+            BattleEngine.spawnParticles(this.x, this.y - 10, this.data.auraColor, 8, 'wind');
+        }
+
+        startNormalAttack() {
+            this.comboStep = (this.comboStep % 4) + 1;
+            this.comboWindow = 32;
+            this.state = 'ATTACK';
+            this.stateTimer = this.data.id === 'jay' ? 13 : 16;
+            this.hasHitCurrentSwing = false;
+            this.vx = this.facing * 4.2;
+            if (this.data.weapon === 'katana' || this.data.weapon === 'muramasa') {
+                SoundFX.play('slash');
+            } else {
+                SoundFX.play('dash');
+            }
+        }
+
+        startSubSkill(opponent) {
+            this.uCooldown = 190; // ~3.1 seconds
+            this.state = 'SUB';
+            this.stateTimer = 22;
+            this.hasHitCurrentSwing = false;
+            const u = this.data.uSkill;
+
+            BattleEngine.spawnFloatingText(this.x, this.y - 105, u.name, this.data.auraColor);
+            SoundFX.play('dash');
+
+            if (u.type === 'iaDash') {
+                this.vx = this.facing * 16;
+            } else if (u.type === 'projectile') {
+                this.vx = -this.facing * 2;
+                BattleEngine.spawnProjectile(this);
+                this.hasHitCurrentSwing = true; // Projectile handles hit
+            } else {
+                this.vx = this.facing * 9.5;
+            }
+        }
+
+        startSpecialSkill(opponent) {
+            this.energy -= 100;
+            this.state = 'SKILL';
+            this.stateTimer = 34;
+            this.hasHitCurrentSwing = false;
+            const iSkill = this.data.iSkill;
+
+            BattleEngine.spawnFloatingText(this.x, this.y - 115, `★ ${iSkill.name} ★`, '#fbbf24');
+            SoundFX.play('ult_trigger');
+
+            if (iSkill.type === 'buffRush') {
+                this.speedBuffTimer = 360; // 6s speed boost for Jinyoung
+            }
+            this.vx = this.facing * 14;
+            BattleEngine.spawnParticles(this.x, this.y - 50, this.data.auraColor, 16, 'spark');
+        }
+
+        startUltimate(opponent) {
+            this.energy -= 300;
+            this.state = 'ULT';
+            this.stateTimer = 46;
+            this.hasHitCurrentSwing = false;
+            this.awakenedTimer = 660; // 11 seconds Awakened buff
+
+            // Trigger Dramatic BVN Ultimate Cut-in
+            BattleEngine.triggerUltimateCutin(this);
+            this.vx = this.facing * 18;
+        }
+
+        checkActiveAttackHit(opponent) {
+            if (this.hasHitCurrentSwing || opponent.state === 'KO') return;
+
+            // Wait a few startup frames
+            if (this.state === 'ATTACK' && this.stateTimer > 12) return;
+
+            // Reach calculation
+            let reach = 82;
+            if (this.data.weapon === 'katana' || this.data.weapon === 'muramasa') reach = 112;
+            else if (this.data.weapon === 'baton' || this.data.weapon === 'kali') reach = 96;
+            else if (this.data.scale >= 1.14) reach = 98;
+
+            if (this.state === 'SUB') reach += 22;
+            if (this.state === 'SKILL') reach += 45;
+            if (this.state === 'ULT') reach += 110;
+
+            const dx = opponent.x - this.x;
+            const dy = Math.abs(opponent.y - this.y);
+            const inFront = (this.facing === 1 && dx >= -20 && dx <= reach) || (this.facing === -1 && dx <= 20 && dx >= -reach);
+
+            if (inFront && dy < 85) {
+                this.hasHitCurrentSwing = true;
+                this.applyDamageToOpponent(opponent);
+            }
+        }
+
+        applyDamageToOpponent(opponent) {
+            let baseDmg = 24;
+            let guardBreak = false;
+            let unblockableGrab = false;
+            let causesBleed = false;
+            let knockbackX = 4.5;
+            let knockbackY = 0;
+            let hitstopFrames = 4;
+
+            if (this.state === 'ATTACK') {
+                baseDmg = 18 + this.comboStep * 6;
+                if (this.comboStep === 4) {
+                    knockbackX = 11;
+                    knockbackY = -7.5;
+                    hitstopFrames = 7;
+                }
+            } else if (this.state === 'SUB') {
+                const u = this.data.uSkill;
+                baseDmg = u.dmg;
+                if (u.type === 'guardBreak') guardBreak = true;
+                if (u.type === 'commandGrab') unblockableGrab = true;
+                knockbackX = 10;
+                knockbackY = -5;
+                hitstopFrames = 7;
+            } else if (this.state === 'SKILL') {
+                const iSkill = this.data.iSkill;
+                baseDmg = iSkill.dmg;
+                if (iSkill.type === 'commandGrab') unblockableGrab = true;
+                if (iSkill.type === 'bleedRush') causesBleed = true;
+                knockbackX = 13;
+                knockbackY = -8.5;
+                hitstopFrames = 10;
+            } else if (this.state === 'ULT') {
+                baseDmg = this.data.oSkill.dmg;
+                guardBreak = true;
+                unblockableGrab = true;
+                knockbackX = 19;
+                knockbackY = -11;
+                hitstopFrames = 15;
+            }
+
+            // Apply Attack Multiplier & Kitae Crit Passive
+            let finalDmg = Math.round(baseDmg * this.getAtkMultiplier());
+            if (this.data.id === 'kitae' && Math.random() < 0.25) {
+                finalDmg = Math.round(finalDmg * 1.35);
+                BattleEngine.spawnFloatingText(opponent.x, opponent.y - 125, 'CHÍ MẠNG! (CRIT)', '#ef4444');
+            }
+
+            // Check if Opponent is Blocking
+            const isBlocking = opponent.state === 'BLOCK' && opponent.facing !== this.facing;
+
+            if (isBlocking && !guardBreak && !unblockableGrab) {
+                // Perfect Daniel Auto-Counter Passive (Within 240ms of pressing Block)
+                if (opponent.data.id === 'daniel_ui' && (performance.now() - opponent.blockStartTime < 260)) {
+                    SoundFX.play('hit_heavy');
+                    BattleEngine.spawnFloatingText(opponent.x, opponent.y - 110, 'PHẢN XẠ VÔ CỰC! (AUTO COUNTER)', '#38bdf8');
+                    this.state = 'HIT';
+                    this.stateTimer = 24;
+                    this.hp = Math.max(0, this.hp - 65);
+                    this.vx = -this.facing * 12;
+                    BattleEngine.triggerHitEffects(this.x, this.y - 55, '#38bdf8', 8, 8);
+                    return;
+                }
+
+                // Chip Damage Calculation
+                let chipRatio = 0.28;
+                if (opponent.data.id === 'zack') chipRatio = 0.14; // Iron Fortress
+                if (this.data.id === 'johan' || this.data.id === 'gapryong') chipRatio = 0.45; // Infinite Technique / Conviction
+
+                const chipDmg = Math.max(2, Math.round(finalDmg * chipRatio));
+                opponent.hp = Math.max(0, opponent.hp - chipDmg);
+                opponent.vx = this.facing * 4;
+                SoundFX.play('block');
+                BattleEngine.spawnParticles(opponent.x, opponent.y - 55, '#38bdf8', 8, 'spark');
+                this.addEnergy(8);
+                opponent.addEnergy(10);
+                return;
+            }
+
+            // If Guard Broken
+            if (isBlocking && (guardBreak || unblockableGrab)) {
+                BattleEngine.spawnFloatingText(opponent.x, opponent.y - 115, 'PHÁ GIÁP! (GUARD BREAK)', '#f43f5e');
+            }
+
+            // Check Super Armor Passives (Shingen Yamazaki Black Bones & Olly Wang Painless)
+            const hasLightSuperArmor =
+                (opponent.data.id === 'shingen' || (opponent.data.id === 'olly' && opponent.hp > opponent.maxHp * 0.3)) &&
+                this.state === 'ATTACK' && this.comboStep <= 2;
+
+            opponent.hp = Math.max(0, opponent.hp - finalDmg);
+
+            if (!hasLightSuperArmor) {
+                // Elite / James Lee / Sinu IA extra hitstun
+                const extraStun = ['elite', 'jameslee', 'sinu'].includes(this.data.id) ? 5 : 0;
+                opponent.state = 'HIT';
+                opponent.stateTimer = 18 + extraStun;
+                opponent.vx = this.facing * knockbackX;
+                if (knockbackY < 0) {
+                    opponent.vy = knockbackY;
+                    opponent.onGround = false;
+                }
+            } else {
+                BattleEngine.spawnFloatingText(opponent.x, opponent.y - 95, 'SIÊU GIÁP! (ARMOR)', '#10b981');
+            }
+
+            // Bleed application
+            if (causesBleed || this.data.id === 'eli' || this.data.id === 'shintaro') {
+                opponent.bleedTimer = 160;
+            }
+
+            // Energy Gain & Combo Counter
+            this.addEnergy(this.state === 'ATTACK' ? 18 : 24);
+            opponent.addEnergy(12);
+
+            this.comboCount++;
+            this.comboDamage += finalDmg;
+            this.comboResetTimer = 75;
+
+            // Sound & Juicy Impact Effects
+            if (this.state === 'ULT' || this.state === 'SKILL' || this.comboStep === 4) {
+                SoundFX.play('hit_heavy');
+            } else if (this.data.weapon === 'katana' || this.data.weapon === 'muramasa') {
+                SoundFX.play('slash');
+            } else {
+                SoundFX.play('hit_light');
+            }
+
+            BattleEngine.triggerHitEffects(
+                (this.x + opponent.x) / 2,
+                opponent.y - 55,
+                this.data.auraColor,
+                hitstopFrames,
+                this.state === 'ULT' ? 18 : (this.state === 'SKILL' ? 10 : 5)
+            );
+        }
+
+        /**
+         * SMART AI FINITE STATE MACHINE (EASY / NORMAL / GOD DOG)
+         */
+        updateAI(opponent) {
+            // Training Mode Dummy behaviors
+            if (GameApp.mode === 'training') {
+                if (GameApp.trainingBehavior === 'dummy') {
+                    this.state = (this.state === 'HIT') ? 'HIT' : 'IDLE';
+                    return;
+                } else if (GameApp.trainingBehavior === 'guard') {
+                    if (this.state !== 'HIT') {
+                        this.state = 'BLOCK';
+                        this.blockStartTime = performance.now();
+                    }
+                    return;
+                }
+            }
+
+            const diff = GameApp.aiDifficulty; // 'easy', 'normal', 'hard'
+            const dist = Math.abs(opponent.x - this.x);
+            this.facing = (opponent.x >= this.x) ? 1 : -1;
+
+            // 1. AI Substitution Escape when being comboed
+            if (this.state === 'HIT') {
+                const escapeChance = diff === 'hard' ? 0.08 : (diff === 'normal' ? 0.03 : 0.005);
+                if (this.stamina >= 50 && opponent.comboCount >= 2 && Math.random() < escapeChance) {
+                    this.performSubstitution(opponent);
+                }
+                return;
+            }
+
+            if (['DASH', 'SUB', 'SKILL', 'ULT'].includes(this.state)) return;
+
+            // 2. AI Combo Continuation (J -> J -> J -> U -> I -> O)
+            if (this.state === 'ATTACK' && this.hasHitCurrentSwing && this.stateTimer <= 8) {
+                if (this.energy >= 300 && (diff !== 'easy' || Math.random() < 0.4)) {
+                    this.startUltimate(opponent);
+                    return;
+                }
+                if (this.comboStep >= 3 && this.uCooldown <= 0 && diff !== 'easy') {
+                    this.startSubSkill(opponent);
+                    return;
+                }
+                if (this.comboStep >= 3 && this.energy >= 100 && Math.random() < (diff === 'hard' ? 0.85 : 0.45)) {
+                    this.startSpecialSkill(opponent);
+                    return;
+                }
+                if (this.comboStep < 4) {
+                    this.startNormalAttack();
+                    return;
+                }
+            }
+
+            if (this.state === 'ATTACK') return;
+
+            // 3. Reactive Defense when Player attacks up close
+            const playerAttacking = ['ATTACK', 'SUB', 'SKILL'].includes(opponent.state) && dist < 135;
+            if (playerAttacking) {
+                const blockChance = diff === 'hard' ? 0.78 : (diff === 'normal' ? 0.42 : 0.15);
+                if (Math.random() < blockChance && this.onGround) {
+                    if (this.state !== 'BLOCK') this.blockStartTime = performance.now();
+                    this.state = 'BLOCK';
+                    this.vx = 0;
+                    return;
+                }
+            }
+
+            // 4. Instant Ultimate Punish when 300% Energy is ready
+            if (this.energy >= 300 && dist < 175 && opponent.state !== 'BLOCK') {
+                const ultChance = diff === 'hard' ? 0.14 : (diff === 'normal' ? 0.06 : 0.02);
+                if (Math.random() < ultChance) {
+                    this.startUltimate(opponent);
+                    return;
+                }
+            }
+
+            // 5. Periodic AI State Decision
+            this.aiDecisionTimer--;
+            if (this.aiDecisionTimer <= 0) {
+                this.aiDecisionTimer = diff === 'hard' ? 10 : (diff === 'normal' ? 20 : 34);
+
+                if (dist > 190) {
+                    // Long Range: Dash in or Projectile
+                    if (this.data.uSkill.type === 'projectile' && this.uCooldown <= 0) {
+                        this.startSubSkill(opponent);
+                        return;
+                    }
+                    if (this.stamina >= 45 && Math.random() < (diff === 'hard' ? 0.65 : 0.3)) {
+                        this.startDash();
+                        return;
+                    }
+                    this.aiState = 'APPROACH';
+                } else if (dist <= 95) {
+                    // Close Range: Attack, Guard Break U, or Special I
+                    if (opponent.state === 'BLOCK' && this.uCooldown <= 0 && diff !== 'easy') {
+                        this.startSubSkill(opponent);
+                        return;
+                    }
+                    if (this.energy >= 100 && Math.random() < (diff === 'hard' ? 0.35 : 0.15)) {
+                        this.startSpecialSkill(opponent);
+                        return;
+                    }
+                    if (Math.random() < (diff === 'hard' ? 0.85 : (diff === 'normal' ? 0.6 : 0.35))) {
+                        this.startNormalAttack();
+                        return;
+                    }
+                    this.aiState = 'IDLE';
+                } else {
+                    // Mid Range
+                    if (this.uCooldown <= 0 && Math.random() < (diff === 'hard' ? 0.45 : 0.2)) {
+                        this.startSubSkill(opponent);
+                        return;
+                    }
+                    this.aiState = 'APPROACH';
+                }
+            }
+
+            // Execute Movement
+            if (this.aiState === 'APPROACH' && dist > 68) {
+                this.vx = this.facing * this.getSpeed();
+                this.state = 'MOVE';
+            } else {
+                this.state = 'IDLE';
+            }
+        }
+    }
+
+    /**
+     * ============================================================================
+     * 6. BATTLE ARENA ENGINE (HITSTOP, SHAKE, PARTICLES, AFTERIMAGES, CUT-INS)
+     * ============================================================================
+     */
+    const BattleEngine = {
+        canvas: document.getElementById('battle-canvas'),
+        ctx: null,
+        width: 1280,
+        height: 720,
+        groundY: 580,
+
+        p1: null,
+        p2: null,
+        particles: [],
+        afterimages: [],
+        projectiles: [],
+        floatingTexts: [],
+
+        hitstopFrames: 0,
+        shakeTime: 0,
+        shakeMagnitude: 0,
+        cutinFreezeFrames: 0,
+        darkScreenFrames: 0,
+
+        matchTimer: 99,
+        lastTimerTick: 0,
+        isRunning: false,
+        matchEnded: false,
+
+        init() {
+            this.ctx = this.canvas.getContext('2d');
+            window.addEventListener('resize', () => this.resize());
+            this.resize();
+        },
+
+        resize() {
+            this.width = window.innerWidth;
+            this.height = window.innerHeight;
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+            this.groundY = Math.floor(this.height * 0.80);
+            if (this.p1 && this.p1.onGround) this.p1.y = this.groundY;
+            if (this.p2 && this.p2.onGround) this.p2.y = this.groundY;
+        },
+
+        startMatch(p1Char, p2Char, mode) {
+            this.resize();
+            const isAI = (mode === 'ai' || mode === 'training');
+            this.p1 = new Fighter(p1Char, this.width * 0.26, 1, true, false);
+            this.p2 = new Fighter(p2Char, this.width * 0.74, -1, false, isAI);
+            this.p1.y = this.groundY;
+            this.p2.y = this.groundY;
+
+            this.particles = [];
+            this.afterimages = [];
+            this.projectiles = [];
+            this.floatingTexts = [];
+            this.hitstopFrames = 0;
+            this.shakeTime = 0;
+            this.cutinFreezeFrames = 0;
+            this.darkScreenFrames = 0;
+
+            this.matchTimer = 99;
+            this.lastTimerTick = performance.now();
+            this.matchEnded = false;
+            this.isRunning = true;
+
+            document.getElementById('match-result-overlay').classList.add('hidden');
+            document.getElementById('ult-cutin-overlay').classList.add('hidden');
+
+            // Setup HUD Static Labels
+            document.getElementById('hud-p1-name').textContent = p1Char.name.toUpperCase();
+            document.getElementById('hud-p2-name').textContent = p2Char.name.toUpperCase();
+            document.getElementById('hud-p2-tag').textContent = isAI ? 'AI' : 'P2';
+            document.getElementById('training-toolbar').classList.toggle('hidden', mode !== 'training');
+
+            this.spawnFloatingText(this.width / 2, this.height * 0.42, 'ROUND 1 — FIGHT!', '#fbbf24', true);
+        },
+
+        triggerHitEffects(x, y, color, hitstop, shakeMag) {
+            this.hitstopFrames = Math.max(this.hitstopFrames, hitstop);
+            this.shakeTime = 10;
+            this.shakeMagnitude = shakeMag;
+            this.spawnParticles(x, y, color, 16, 'spark');
+            this.spawnParticles(x, y, '#ffffff', 6, 'ring');
+        },
+
+        spawnParticles(x, y, color, count, type = 'spark') {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const spd = 2 + Math.random() * 9;
+                this.particles.push({
+                    x, y,
+                    vx: Math.cos(angle) * spd,
+                    vy: Math.sin(angle) * spd - (type === 'blood' ? 2 : 0),
+                    color,
+                    size: type === 'ring' ? 12 : (3 + Math.random() * 5),
+                    life: 1.0,
+                    decay: 0.04 + Math.random() * 0.04,
+                    type
+                });
+            }
+        },
+
+        spawnAfterimage(fighter) {
+            this.afterimages.push({
+                x: fighter.x,
+                y: fighter.y,
+                facing: fighter.facing,
+                color: fighter.data.auraColor,
+                scale: fighter.data.scale || 1,
+                alpha: 0.55
+            });
+        },
+
+        spawnProjectile(fighter) {
+            this.projectiles.push({
+                owner: fighter,
+                x: fighter.x + fighter.facing * 40,
+                y: fighter.y - 56,
+                vx: fighter.facing * 15,
+                color: fighter.data.auraColor,
+                dmg: fighter.data.uSkill.dmg,
+                life: 55
+            });
+        },
+
+        spawnFloatingText(x, y, text, color = '#fbbf24', isBig = false) {
+            this.floatingTexts.push({
+                x, y, text, color, isBig,
+                life: 1.0
+            });
+        },
+
+        triggerUltimateCutin(fighter) {
+            SoundFX.play('ult_trigger');
+            this.cutinFreezeFrames = 52;
+            this.darkScreenFrames = 95;
+
+            const overlay = document.getElementById('ult-cutin-overlay');
+            const banner = document.getElementById('ult-cutin-banner');
+            document.getElementById('ult-cutin-char').textContent = `${fighter.data.name.toUpperCase()} • ${fighter.data.title.toUpperCase()}`;
+            document.getElementById('ult-cutin-skill').textContent = fighter.data.oSkill.name;
+            document.getElementById('ult-cutin-quote').textContent = fighter.data.oSkill.quote;
+
+            banner.style.borderColor = fighter.data.auraColor;
+            overlay.classList.remove('hidden');
+            banner.classList.remove('cutin-animate');
+            void banner.offsetWidth; // Reflow animation
+            banner.classList.add('cutin-animate');
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+            }, 1100);
+        },
+
+        onFighterKO(loser, winner) {
+            if (this.matchEnded) return;
+            this.matchEnded = true;
+            this.shakeTime = 28;
+            this.shakeMagnitude = 16;
+
+            setTimeout(() => {
+                const overlay = document.getElementById('match-result-overlay');
+                document.getElementById('result-ko-badge').textContent = 'K.O.!';
+                document.getElementById('result-winner-text').textContent = `${winner.data.name.toUpperCase()} CHIẾN THẮNG!`;
+                document.getElementById('result-sub-text').textContent = winner.data.oSkill.quote;
+                overlay.classList.remove('hidden');
+            }, 950);
+        },
+
+        update() {
+            if (!this.isRunning) return;
+
+            // Ultimate Cut-in Time Freeze
+            if (this.cutinFreezeFrames > 0) {
+                this.cutinFreezeFrames--;
+                Input.clearJustPressed();
+                return;
+            }
+
+            // Hitstop Freeze Frames (Juicy Impact)
+            if (this.hitstopFrames > 0) {
+                this.hitstopFrames--;
+                Input.clearJustPressed();
+                return;
+            }
+
+            if (this.darkScreenFrames > 0) this.darkScreenFrames--;
+            if (this.shakeTime > 0) this.shakeTime--;
+
+            // Countdown Timer (except Training Mode)
+            const now = performance.now();
+            if (!this.matchEnded && GameApp.mode !== 'training' && now - this.lastTimerTick >= 1000) {
+                this.lastTimerTick = now;
+                if (this.matchTimer > 0) {
+                    this.matchTimer--;
+                    if (this.matchTimer === 0) {
+                        this.matchEnded = true;
+                        const winner = (this.p1.hp >= this.p2.hp) ? this.p1 : this.p2;
+                        const overlay = document.getElementById('match-result-overlay');
+                        document.getElementById('result-ko-badge').textContent = 'TIME OVER';
+                        document.getElementById('result-winner-text').textContent = `${winner.data.name.toUpperCase()} THẮNG ĐIỂM!`;
+                        overlay.classList.remove('hidden');
+                    }
+                }
+            }
+
+            // Update Fighters
+            this.p1.update(this.groundY, this.width, this.p2);
+            this.p2.update(this.groundY, this.width, this.p1);
+
+            // Prevent Fighters from overlapping too closely
+            const minDist = 36;
+            const dx = this.p2.x - this.p1.x;
+            if (Math.abs(dx) < minDist && Math.abs(this.p1.y - this.p2.y) < 55) {
+                const push = (minDist - Math.abs(dx)) * 0.5;
+                if (dx >= 0) {
+                    this.p1.x -= push;
+                    this.p2.x += push;
+                } else {
+                    this.p1.x += push;
+                    this.p2.x -= push;
+                }
+            }
+
+            // Update Projectiles (Tom Lee Shockwave, Goo Iai Wave)
+            for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                const proj = this.projectiles[i];
+                proj.x += proj.vx;
+                proj.life--;
+                const target = proj.owner.isPlayer1 ? this.p2 : this.p1;
+                if (Math.abs(proj.x - target.x) < 42 && Math.abs(proj.y - (target.y - 50)) < 55) {
+                    target.hp = Math.max(0, target.hp - proj.dmg);
+                    target.state = 'HIT';
+                    target.stateTimer = 18;
+                    target.vx = Math.sign(proj.vx) * 9;
+                    SoundFX.play('hit_heavy');
+                    this.triggerHitEffects(proj.x, proj.y, proj.color, 6, 7);
+                    this.projectiles.splice(i, 1);
+                    continue;
+                }
+                if (proj.life <= 0) this.projectiles.splice(i, 1);
+            }
+
+            // Update Particles
+            for (let i = this.particles.length - 1; i >= 0; i--) {
+                const pt = this.particles[i];
+                pt.x += pt.vx;
+                pt.y += pt.vy;
+                if (pt.type === 'blood') pt.vy += 0.35;
+                pt.life -= pt.decay;
+                if (pt.life <= 0) this.particles.splice(i, 1);
+            }
+
+            // Update Afterimages
+            for (let i = this.afterimages.length - 1; i >= 0; i--) {
+                this.afterimages[i].alpha -= 0.055;
+                if (this.afterimages[i].alpha <= 0) this.afterimages.splice(i, 1);
+            }
+
+            // Update Floating Texts
+            for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+                const ft = this.floatingTexts[i];
+                ft.y -= 1.1;
+                ft.life -= 0.022;
+                if (ft.life <= 0) this.floatingTexts.splice(i, 1);
+            }
+
+            this.syncHUD();
+            Input.clearJustPressed();
+        },
+
+        syncHUD() {
+            // P1 HP & Stamina
+            const p1HpPct = Math.max(0, (this.p1.hp / this.p1.maxHp) * 100);
+            const p1DelayPct = Math.max(0, (this.p1.displayHp / this.p1.maxHp) * 100);
+            document.getElementById('hud-p1-hp-bar').style.width = `${p1HpPct}%`;
+            document.getElementById('hud-p1-hp-delay').style.width = `${p1DelayPct}%`;
+            document.getElementById('hud-p1-hp-text').textContent = `${Math.ceil(this.p1.hp)} / ${this.p1.maxHp}`;
+            document.getElementById('hud-p1-stamina').style.width = `${this.p1.stamina}%`;
+            document.getElementById('hud-p1-status').classList.toggle('hidden', this.p1.awakenedTimer <= 0);
+
+            // P2 HP & Stamina
+            const p2HpPct = Math.max(0, (this.p2.hp / this.p2.maxHp) * 100);
+            const p2DelayPct = Math.max(0, (this.p2.displayHp / this.p2.maxHp) * 100);
+            document.getElementById('hud-p2-hp-bar').style.width = `${p2HpPct}%`;
+            document.getElementById('hud-p2-hp-delay').style.width = `${p2DelayPct}%`;
+            document.getElementById('hud-p2-hp-text').textContent = `${Math.ceil(this.p2.hp)} / ${this.p2.maxHp}`;
+            document.getElementById('hud-p2-stamina').style.width = `${this.p2.stamina}%`;
+            document.getElementById('hud-p2-status').classList.toggle('hidden', this.p2.awakenedTimer <= 0);
+
+            // Timer
+            document.getElementById('hud-timer').textContent = GameApp.mode === 'training' ? '∞' : this.matchTimer;
+
+            // 3-Segment Energy Bars
+            this.updateEnergySegments('p1', this.p1.energy);
+            this.updateEnergySegments('p2', this.p2.energy);
+        },
+
+        updateEnergySegments(prefix, energy) {
+            const bars = Math.floor(energy / 100);
+            document.getElementById(`hud-${prefix}-energy-num`).textContent = `${Math.floor(energy)}% (${bars} VẠCH)`;
+            const seg1 = Math.min(100, Math.max(0, energy));
+            const seg2 = Math.min(100, Math.max(0, energy - 100));
+            const seg3 = Math.min(100, Math.max(0, energy - 200));
+            document.getElementById(`hud-${prefix}-en-1`).style.width = `${seg1}%`;
+            document.getElementById(`hud-${prefix}-en-2`).style.width = `${seg2}%`;
+            document.getElementById(`hud-${prefix}-en-3`).style.width = `${seg3}%`;
+        },
+
+        render() {
+            if (!this.isRunning) return;
+            const ctx = this.ctx;
+            ctx.save();
+
+            // Apply Dynamic Screen Shake
+            if (this.shakeTime > 0) {
+                const sx = (Math.random() - 0.5) * this.shakeMagnitude * 2;
+                const sy = (Math.random() - 0.5) * this.shakeMagnitude * 2;
+                ctx.translate(sx, sy);
+            }
+
+            // 1. Draw Lookism Seoul Night Street / Underground Arena Background
+            this.drawArenaBackground(ctx);
+
+            // 2. Darken Screen during Ultimate Execution
+            if (this.darkScreenFrames > 0) {
+                ctx.fillStyle = `rgba(2, 6, 23, ${Math.min(0.78, this.darkScreenFrames * 0.025)})`;
+                ctx.fillRect(0, 0, this.width, this.height);
+            }
+
+            // 3. Draw Ghost Afterimages
+            for (const ghost of this.afterimages) {
+                ctx.save();
+                ctx.translate(ghost.x, ghost.y);
+                ctx.scale(ghost.facing * ghost.scale, ghost.scale);
+                ctx.globalAlpha = ghost.alpha * 0.65;
+                ctx.fillStyle = ghost.color;
+                ctx.beginPath();
+                ctx.roundRect(-14, -84, 28, 80, 10);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            // 4. Draw Both Fighters
+            FighterRenderer.drawFighter(ctx, this.p1);
+            FighterRenderer.drawFighter(ctx, this.p2);
+
+            // 5. Draw Active Attack Slash / Shockwave Arcs
+            this.drawAttackArcs(ctx, this.p1);
+            this.drawAttackArcs(ctx, this.p2);
+
+            // 6. Draw Projectiles
+            for (const proj of this.projectiles) {
+                ctx.save();
+                ctx.translate(proj.x, proj.y);
+                ctx.strokeStyle = proj.color;
+                ctx.lineWidth = 6;
+                ctx.shadowColor = proj.color;
+                ctx.shadowBlur = 16;
+                ctx.beginPath();
+                ctx.arc(0, 0, 28, -Math.PI * 0.45, Math.PI * 0.45, proj.vx < 0);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            // 7. Draw Particles (Hit sparks, blood, wind, rings)
+            for (const pt of this.particles) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, pt.life);
+                if (pt.type === 'ring') {
+                    ctx.strokeStyle = pt.color;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, (1 - pt.life) * 58 + 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = pt.color;
+                    ctx.shadowColor = pt.color;
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.arc(pt.x, pt.y, pt.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+
+            // 8. Draw BVN Combo Counters on Sides
+            this.drawComboCounter(ctx, this.p1, 45, this.height * 0.34, 'left');
+            this.drawComboCounter(ctx, this.p2, this.width - 45, this.height * 0.34, 'right');
+
+            // 9. Draw Floating Skill Names
+            for (const ft of this.floatingTexts) {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, ft.life);
+                ctx.font = ft.isBig ? 'italic 900 42px Anton, sans-serif' : 'italic 700 20px "Chakra Petch", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 5;
+                ctx.strokeText(ft.text, ft.x, ft.y);
+                ctx.fillStyle = ft.color;
+                ctx.fillText(ft.text, ft.x, ft.y);
+                ctx.restore();
+            }
+
+            ctx.restore();
+        },
+
+        drawArenaBackground(ctx) {
+            // Night Sky Gradient
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, this.groundY);
+            skyGrad.addColorStop(0, '#040711');
+            skyGrad.addColorStop(0.55, '#0f172a');
+            skyGrad.addColorStop(1, '#1e1b4b');
+            ctx.fillStyle = skyGrad;
+            ctx.fillRect(0, 0, this.width, this.groundY);
+
+            // Full Moon
+            ctx.save();
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.12)';
+            ctx.beginPath();
+            ctx.arc(this.width * 0.78, this.height * 0.22, 75, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = 'rgba(248, 250, 252, 0.85)';
+            ctx.beginPath();
+            ctx.arc(this.width * 0.78, this.height * 0.22, 46, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Seoul City Skyline Silhouettes (Big Deal Street / Workers HQ)
+            ctx.fillStyle = '#090d16';
+            const bWidths = [90, 130, 85, 150, 110, 140, 95, 125, 160, 110, 130, 100];
+            let curX = 0;
+            bWidths.forEach((bw, idx) => {
+                const bh = 120 + ((idx * 53) % 160);
+                ctx.fillRect(curX, this.groundY - bh, bw - 6, bh);
+                curX += bw;
+            });
+
+            // Arena Asphalt Floor
+            const floorGrad = ctx.createLinearGradient(0, this.groundY, 0, this.height);
+            floorGrad.addColorStop(0, '#1e293b');
+            floorGrad.addColorStop(0.15, '#0f172a');
+            floorGrad.addColorStop(1, '#020617');
+            ctx.fillStyle = floorGrad;
+            ctx.fillRect(0, this.groundY, this.width, this.height - this.groundY);
+
+            // Glowing Stage Line
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(0, this.groundY);
+            ctx.lineTo(this.width, this.groundY);
+            ctx.stroke();
+        },
+
+        drawAttackArcs(ctx, f) {
+            if (!['ATTACK', 'SUB', 'SKILL', 'ULT'].includes(f.state)) return;
+            ctx.save();
+            ctx.translate(f.x, f.y - 54);
+            ctx.scale(f.facing, 1);
+
+            const radius = f.state === 'ULT' ? 115 : (f.state === 'SKILL' ? 75 : 48);
+            ctx.strokeStyle = f.data.auraColor;
+            ctx.lineWidth = f.state === 'ULT' ? 10 : 5;
+            ctx.shadowColor = f.data.auraColor;
+            ctx.shadowBlur = 16;
+
+            ctx.beginPath();
+            ctx.arc(18, 0, radius, -Math.PI * 0.45, Math.PI * 0.45);
+            ctx.stroke();
+
+            // Johan Seong Infinite Technique Multi-Prism Slashes
+            if (f.data.id === 'johan' && (f.state === 'SKILL' || f.state === 'ULT')) {
+                const colors = ['#f43f5e', '#38bdf8', '#facc15', '#a855f7'];
+                colors.forEach((col, idx) => {
+                    ctx.strokeStyle = col;
+                    ctx.beginPath();
+                    ctx.arc(25 + idx * 12, (idx - 1.5) * 14, radius * 0.85, -Math.PI * 0.5, Math.PI * 0.5);
+                    ctx.stroke();
+                });
+            }
+            ctx.restore();
+        },
+
+        drawComboCounter(ctx, f, x, y, align) {
+            if (f.comboCount < 2) return;
+            ctx.save();
+            ctx.textAlign = align;
+            ctx.font = 'italic 900 44px Anton, sans-serif';
+            ctx.fillStyle = f.data.auraColor;
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 5;
+            ctx.strokeText(`${f.comboCount} HITS!`, x, y);
+            ctx.fillText(`${f.comboCount} HITS!`, x, y);
+
+            ctx.font = '700 16px "Chakra Petch", sans-serif';
+            ctx.fillStyle = '#f8fafc';
+            ctx.strokeText(`TOTAL DAMAGE: ${f.comboDamage}`, x, y + 24);
+            ctx.fillText(`TOTAL DAMAGE: ${f.comboDamage}`, x, y + 24);
+            ctx.restore();
+        }
+    };
+
+    /**
+     * ============================================================================
+     * 7. APPLICATION CONTROLLER (MENUS, CHARACTER SELECT, PREVIEWS, LOOP)
+     * ============================================================================
+     */
+    const GameApp = {
+        mode: 'ai', // 'ai', 'pvp', 'training'
+        aiDifficulty: 'normal', // 'easy', 'normal', 'hard'
+        trainingBehavior: 'dummy', // 'dummy', 'guard', 'fight'
+        activeSelector: 1, // 1 for P1, 2 for P2
+        currentGenFilter: 'ALL',
+
+        p1Selected: CHARACTERS[0], // Gapryong Kim default
+        p2Selected: CHARACTERS[8], // Gun Park default
+
+        init() {
+            BattleEngine.init();
+            this.bindMenuEvents();
+            this.renderRosterGrid();
+            this.updateSelectPreview(1, this.p1Selected);
+            this.updateSelectPreview(2, this.p2Selected);
+            this.startLoop();
+        },
+
+        bindMenuEvents() {
+            // AI Difficulty Buttons
+            document.querySelectorAll('.diff-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    this.aiDifficulty = btn.dataset.diff;
+                    document.querySelectorAll('.diff-btn').forEach(b => {
+                        b.className = 'diff-btn py-1.5 text-xs font-arcade rounded border border-slate-700 bg-slate-800 text-slate-300 transition';
+                    });
+                    btn.className = 'diff-btn py-1.5 text-xs font-arcade rounded border border-amber-500 bg-amber-500/20 text-amber-300 font-bold transition';
+                });
+            });
+
+            // Sound Toggle
+            document.getElementById('btn-toggle-sound').addEventListener('click', () => SoundFX.toggle());
+
+            // Controls Modal
+            const modal = document.getElementById('modal-controls');
+            document.getElementById('btn-open-controls').addEventListener('click', () => modal.classList.remove('hidden'));
+            document.getElementById('btn-close-controls').addEventListener('click', () => modal.classList.add('hidden'));
+        },
+
+        showMenu() {
+            BattleEngine.isRunning = false;
+            document.getElementById('screen-menu').classList.remove('hidden');
+            document.getElementById('screen-select').classList.add('hidden');
+            document.getElementById('screen-battle').classList.add('hidden');
+        },
+
+        openCharSelect(mode) {
+            this.mode = mode;
+            BattleEngine.isRunning = false;
+            document.getElementById('screen-menu').classList.add('hidden');
+            document.getElementById('screen-battle').classList.add('hidden');
+            document.getElementById('screen-select').classList.remove('hidden');
+
+            const diffLabels = { easy: 'DỄ', normal: 'TRUNG BÌNH', hard: 'GOD DOG (KHÓ)' };
+            const modeText = mode === 'ai'
+                ? `1P VS AI (${diffLabels[this.aiDifficulty]})`
+                : (mode === 'pvp' ? '1P VS 2P (ĐỐI KHÁNG 2 NGƯỜI)' : 'TRAINING MODE (TẬP LUYỆN)');
+            document.getElementById('select-mode-label').textContent = `CHẾ ĐỘ: ${modeText}`;
+            document.getElementById('p2-slot-badge').textContent = mode === 'pvp' ? 'PLAYER 2' : 'AI OPPONENT';
+
+            this.setActiveSelector(1);
+            this.renderRosterGrid();
+        },
+
+        setActiveSelector(playerNum) {
+            this.activeSelector = playerNum;
+            const p1Panel = document.getElementById('p1-select-panel');
+            const p2Panel = document.getElementById('p2-select-panel');
+            const btn1 = document.getElementById('btn-slot-p1');
+            const btn2 = document.getElementById('btn-slot-p2');
+
+            if (playerNum === 1) {
+                p1Panel.className = 'lg:col-span-3 bg-slate-900/90 border-2 border-amber-500 rounded-xl p-3 flex flex-col justify-between cursor-pointer relative overflow-hidden shadow-lg shadow-amber-500/10';
+                p2Panel.className = 'lg:col-span-3 bg-slate-900/90 border-2 border-slate-700 rounded-xl p-3 flex flex-col justify-between cursor-pointer relative overflow-hidden opacity-85';
+                btn1.className = 'px-2.5 py-1 rounded bg-amber-500 text-slate-950 font-bold';
+                btn2.className = 'px-2.5 py-1 rounded bg-slate-800 text-sky-400 border border-sky-500/40';
+            } else {
+                p1Panel.className = 'lg:col-span-3 bg-slate-900/90 border-2 border-slate-700 rounded-xl p-3 flex flex-col justify-between cursor-pointer relative overflow-hidden opacity-85';
+                p2Panel.className = 'lg:col-span-3 bg-slate-900/90 border-2 border-sky-400 rounded-xl p-3 flex flex-col justify-between cursor-pointer relative overflow-hidden shadow-lg shadow-sky-500/10';
+                btn1.className = 'px-2.5 py-1 rounded bg-slate-800 text-amber-400 border border-amber-500/40';
+                btn2.className = 'px-2.5 py-1 rounded bg-sky-500 text-slate-950 font-bold';
+            }
+        },
+
+        filterGen(gen) {
+            this.currentGenFilter = gen;
+            document.querySelectorAll('.gen-tab').forEach(btn => {
+                if (btn.dataset.gen === gen) {
+                    btn.className = 'gen-tab px-2.5 py-1 rounded text-xs font-arcade font-bold bg-amber-500 text-slate-950 transition';
+                } else {
+                    btn.className = 'gen-tab px-2.5 py-1 rounded text-xs font-arcade bg-slate-800 text-slate-300 hover:bg-slate-700 transition';
+                }
+            });
+            this.renderRosterGrid();
+        },
+
+        renderRosterGrid() {
+            const container = document.getElementById('roster-container');
+            container.innerHTML = '';
+
+            const gens = this.currentGenFilter === 'ALL' ? ['GEN 0', 'GEN 1', 'GEN 2'] : [this.currentGenFilter];
+            const genTitles = {
+                'GEN 0': '1. GEN 0 — THẾ HỆ TIỀN KHỞI (HUYỀN THOẠI)',
+                'GEN 1': '2. GEN 1 — THẾ HỆ THỨ NHẤT (CÁC VỊ VUA)',
+                'GEN 2': '3. GEN 2 — THẾ HỆ THỨ HAI (ALLIED & TỨ ĐẠI BĂNG)'
+            };
+
+            gens.forEach(genKey => {
+                const chars = CHARACTERS.filter(c => c.gen === genKey);
+                const section = document.createElement('div');
+                section.innerHTML = `<div class="text-xs font-arcade font-bold text-amber-400 tracking-wider uppercase mb-2 border-b border-slate-800 pb-1">${genTitles[genKey]}</div>`;
+
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-2 sm:grid-cols-3 gap-2';
+
+                chars.forEach(char => {
+                    const isP1 = this.p1Selected.id === char.id;
+                    const isP2 = this.p2Selected.id === char.id;
+                    let borderClass = 'border-slate-700/80 hover:border-slate-400';
+                    if (isP1 && isP2) borderClass = 'border-purple-400 ring-2 ring-purple-500/40';
+                    else if (isP1) borderClass = 'border-amber-400 ring-2 ring-amber-500/30';
+                    else if (isP2) borderClass = 'border-sky-400 ring-2 ring-sky-500/30';
+
+                    const card = document.createElement('div');
+                    card.className = `char-card bg-slate-950/90 border-2 ${borderClass} rounded-lg p-2 cursor-pointer flex items-center gap-2.5 relative overflow-hidden`;
+                    card.innerHTML = `
+                        <div class="w-3 h-10 rounded-full shrink-0" style="background: ${char.auraColor}; box-shadow: 0 0 8px ${char.auraColor}"></div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-white truncate">${char.name}</div>
+                            <div class="text-[10px] font-arcade text-slate-400 truncate">${char.title}</div>
+                        </div>
+                        <div class="flex flex-col gap-0.5">
+                            ${isP1 ? '<span class="px-1.5 py-0.2 bg-amber-500 text-slate-950 text-[9px] font-arcade font-bold rounded">P1</span>' : ''}
+                            ${isP2 ? '<span class="px-1.5 py-0.2 bg-sky-400 text-slate-950 text-[9px] font-arcade font-bold rounded">P2</span>' : ''}
+                        </div>
+                    `;
+                    card.addEventListener('click', () => {
+                        SoundFX.play('hit_light');
+                        if (this.activeSelector === 1) {
+                            this.p1Selected = char;
+                            this.updateSelectPreview(1, char);
+                            this.setActiveSelector(2);
+                        } else {
+                            this.p2Selected = char;
+                            this.updateSelectPreview(2, char);
+                        }
+                        this.renderRosterGrid();
+                    });
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(grid);
+                container.appendChild(section);
+            });
+        },
+
+        updateSelectPreview(playerNum, char) {
+            const prefix = `p${playerNum}`;
+            document.getElementById(`${prefix}-gen-badge`).textContent = char.gen;
+            document.getElementById(`${prefix}-char-title`).textContent = char.title;
+            document.getElementById(`${prefix}-char-name`).textContent = char.name;
+
+            // Normalize stat bars
+            const hpPct = Math.min(100, Math.round((char.hp / 1320) * 100));
+            const spdPct = Math.min(100, Math.round((char.speed / 6.8) * 100));
+            const atkPct = Math.min(100, Math.round((char.atk / 1.35) * 100));
+
+            document.getElementById(`${prefix}-stat-hp`).style.width = `${hpPct}%`;
+            document.getElementById(`${prefix}-stat-spd`).style.width = `${spdPct}%`;
+            document.getElementById(`${prefix}-stat-atk`).style.width = `${atkPct}%`;
+
+            document.getElementById(`${prefix}-skill-passive`).textContent = `${char.passiveName} — ${char.passiveDesc}`;
+            document.getElementById(`${prefix}-skill-u`).textContent = `${char.uSkill.name} — ${char.uSkill.desc}`;
+            document.getElementById(`${prefix}-skill-i`).textContent = `${char.iSkill.name} — ${char.iSkill.desc}`;
+            document.getElementById(`${prefix}-skill-o`).textContent = `${char.oSkill.name} — ${char.oSkill.desc}`;
+        },
+
+        randomSelect() {
+            SoundFX.play('dash');
+            const idx1 = Math.floor(Math.random() * CHARACTERS.length);
+            let idx2 = Math.floor(Math.random() * CHARACTERS.length);
+            if (idx2 === idx1) idx2 = (idx1 + 1) % CHARACTERS.length;
+            this.p1Selected = CHARACTERS[idx1];
+            this.p2Selected = CHARACTERS[idx2];
+            this.updateSelectPreview(1, this.p1Selected);
+            this.updateSelectPreview(2, this.p2Selected);
+            this.renderRosterGrid();
+        },
+
+        startMatch() {
+            SoundFX.play('ult_trigger');
+            document.getElementById('screen-select').classList.add('hidden');
+            document.getElementById('screen-battle').classList.remove('hidden');
+            BattleEngine.startMatch(this.p1Selected, this.p2Selected, this.mode);
+        },
+
+        rematch() {
+            SoundFX.play('ult_trigger');
+            BattleEngine.startMatch(this.p1Selected, this.p2Selected, this.mode);
+        },
+
+        setTrainingAI(behavior) {
+            this.trainingBehavior = behavior;
+            ['dummy', 'guard', 'fight'].forEach(b => {
+                const el = document.getElementById(`trn-${b}`);
+                el.className = (b === behavior)
+                    ? 'px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-bold'
+                    : 'px-2 py-0.5 rounded bg-slate-800 text-slate-300';
+            });
+        },
+
+        refillTraining() {
+            if (BattleEngine.p1 && BattleEngine.p2) {
+                BattleEngine.p1.hp = BattleEngine.p1.maxHp;
+                BattleEngine.p2.hp = BattleEngine.p2.maxHp;
+                BattleEngine.p1.energy = 300;
+                BattleEngine.p2.energy = 300;
+                SoundFX.play('ult_trigger');
+            }
+        },
+
+        renderSelectPreviews() {
+            if (document.getElementById('screen-select').classList.contains('hidden')) return;
+            const c1 = document.getElementById('p1-preview-canvas');
+            const c2 = document.getElementById('p2-preview-canvas');
+            if (!c1 || !c2) return;
+
+            const ctx1 = c1.getContext('2d');
+            const ctx2 = c2.getContext('2d');
+            ctx1.clearRect(0, 0, c1.width, c1.height);
+            ctx2.clearRect(0, 0, c2.width, c2.height);
+
+            FighterRenderer.drawFighter(ctx1, {
+                data: this.p1Selected,
+                x: 110, y: 142, vx: 0, vy: 0, facing: 1,
+                onGround: true, state: 'IDLE', energy: 300, awakenedTimer: 1
+            }, true);
+
+            FighterRenderer.drawFighter(ctx2, {
+                data: this.p2Selected,
+                x: 110, y: 142, vx: 0, vy: 0, facing: -1,
+                onGround: true, state: 'IDLE', energy: 300, awakenedTimer: 1
+            }, true);
+        },
+
+        renderMenuParticles() {
+            if (document.getElementById('screen-menu').classList.contains('hidden')) return;
+            const canvas = document.getElementById('menu-bg-canvas');
+            if (!canvas) return;
+            if (canvas.width !== window.innerWidth) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            const t = performance.now() * 0.001;
+            for (let i = 0; i < 24; i++) {
+                const x = ((i * 197 + t * 40) % canvas.width);
+                const y = canvas.height - ((i * 131 + t * (55 + (i % 4) * 15)) % canvas.height);
+                ctx.fillStyle = i % 2 === 0 ? '#f59e0b' : '#a855f7';
+                ctx.beginPath();
+                ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        },
+
+        startLoop() {
+            const loop = () => {
+                this.renderMenuParticles();
+                this.renderSelectPreviews();
+                BattleEngine.update();
+                BattleEngine.render();
+                requestAnimationFrame(loop);
+            };
+            requestAnimationFrame(loop);
+        }
+    };
+
+    window.onload = function () {
+        GameApp.init();
+    };
+    </script>
+</body>
+</html>
